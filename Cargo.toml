@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "eth2-client",
+    "eth2-utility",
+    "eth-types",
+]
+
+[patch]
+[patch.crates-io]
+eth2_hashing = { path = "eth2_hashing" }

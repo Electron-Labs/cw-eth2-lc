@@ -20,6 +20,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "amcl"
+version = "0.3.0"
+source = "git+https://github.com/sigp/milagro_bls?tag=v1.4.2#16655aa033175a90c10ef02aa144e2835de23aec"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -143,6 +148,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69cce20737498f97b993470a6e536b8523f0af7892a4f928cceb1ac5e52ebe7e"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "bls"
+version = "0.2.0"
+source = "git+https://github.com/aurora-is-near/lighthouse.git?rev=b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec#b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec"
+dependencies = [
+ "eth2_hashing",
+ "eth2_serde_utils",
+ "eth2_ssz",
+ "ethereum-types",
+ "getrandom 0.2.8",
+ "hex",
+ "milagro_bls",
+ "rand 0.7.3",
+ "serde",
+ "serde_derive",
+ "tree_hash",
+ "zeroize",
 ]
 
 [[package]]
@@ -751,15 +775,24 @@ dependencies = [
 name = "eth2-client"
 version = "0.1.0"
 dependencies = [
+ "bitvec 1.0.1",
+ "bls",
+ "borsh",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus",
  "cw2",
+ "eth-types",
+ "eth2-utility",
+ "ethereum-types",
+ "merkle_proof",
+ "near-sdk",
  "schemars",
  "serde",
  "thiserror",
+ "tree_hash",
 ]
 
 [[package]]
@@ -931,8 +964,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c05aeb6a22b8f62540c194aac980f2115af067bfe15a0734d7277a768d396b31"
 dependencies = [
  "cfg-if 1.0.0",
+ "js-sys",
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1155,6 +1190,18 @@ dependencies = [
  "ethereum-types",
  "lazy_static",
  "safe_arith",
+]
+
+[[package]]
+name = "milagro_bls"
+version = "1.4.2"
+source = "git+https://github.com/sigp/milagro_bls?tag=v1.4.2#16655aa033175a90c10ef02aa144e2835de23aec"
+dependencies = [
+ "amcl",
+ "hex",
+ "lazy_static",
+ "rand 0.7.3",
+ "zeroize",
 ]
 
 [[package]]

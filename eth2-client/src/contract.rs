@@ -1,15 +1,24 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+};
 use cw2::set_contract_version;
+use eth2_utility::types::InitInput;
 
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, GetCountResponse, InstantiateMsg, QueryMsg};
-use crate::state::{State, STATE};
+use crate::{error::ContractError, msg::GenericQueryResponse, rainbow};
+use crate::{
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
+    state::STATE_KEY,
+};
+use borsh::BorshDeserialize;
+use borsh::BorshSerialize;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+// TODO we dont need to deserialize 50k headers on every call
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -18,139 +27,74 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let state = State {
-        count: msg.count,
-        owner: info.sender.clone(),
-    };
+    let args = InitInput::try_from_slice(msg.borsh.as_slice())?;
+    let state = rainbow::Eth2Client::init(args);
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?;
+    deps.storage.set(STATE_KEY, state.try_to_vec()?.as_slice());
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender)
-        .add_attribute("count", msg.count.to_string()))
+        .add_attribute("owner", info.sender))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::Increment {} => execute::increment(deps),
-        ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
-    }
-}
-
-pub mod execute {
-    use super::*;
-
-    pub fn increment(deps: DepsMut) -> Result<Response, ContractError> {
-        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            state.count += 1;
-            Ok(state)
-        })?;
-
-        Ok(Response::new().add_attribute("action", "increment"))
-    }
-
-    pub fn reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
-        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            if info.sender != state.owner {
-                return Err(ContractError::Unauthorized {});
-            }
-            state.count = count;
-            Ok(state)
-        })?;
-        Ok(Response::new().add_attribute("action", "reset"))
-    }
+    match msg {}
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::GetCount {} => to_binary(&query::count(deps)?),
-    }
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let res = try_query(deps, env, msg).map_err(|e| StdError::generic_err(e.to_string()))?;
+
+    Ok(res)
 }
 
-pub mod query {
-    use super::*;
-
-    pub fn count(deps: Deps) -> StdResult<GetCountResponse> {
-        let state = STATE.load(deps.storage)?;
-        Ok(GetCountResponse { count: state.count })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
-
-    #[test]
-    fn proper_initialization() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(1000, "earth"));
-
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(17, value.count);
-    }
-
-    #[test]
-    fn increment() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // beneficiary can release it
-        let info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Increment {};
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // should increase counter by 1
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(18, value.count);
-    }
-
-    #[test]
-    fn reset() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // beneficiary can release it
-        let unauth_info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        match res {
-            Err(ContractError::Unauthorized {}) => {}
-            _ => panic!("Must return unauthorized error"),
+pub fn try_query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
+    let state = rainbow::Eth2Client::try_from_slice(
+        deps.storage
+            .get(STATE_KEY)
+            .ok_or(ContractError::Std(StdError::generic_err(
+                "could not find state",
+            )))?
+            .as_slice(),
+    )?;
+    let res = match msg {
+        QueryMsg::IsInitialized {} => true.try_to_vec()?,
+        QueryMsg::LastBlockNumber {} => state.last_block_number().try_to_vec()?,
+        QueryMsg::BlockHashSafe { block_number } => {
+            state.block_hash_safe(block_number).try_to_vec()?
         }
-
-        // only the original creator can reset the counter
-        let auth_info = mock_info("creator", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
-
-        // should now be 5
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(5, value.count);
-    }
+        QueryMsg::IsKnownExecutionHeader { hash } => state
+            .is_known_execution_header(eth_types::H256::try_from_slice(hash.as_slice())?)
+            .try_to_vec()?,
+        QueryMsg::FinalizedBeaconBlockRoot {} => {
+            state.finalized_beacon_block_root().try_to_vec()?
+        }
+        QueryMsg::FinalizedBeaconBlockSlot {} => {
+            state.finalized_beacon_block_slot().try_to_vec()?
+        }
+        QueryMsg::FinalizedBeaconBlockHeader {} => {
+            state.finalized_beacon_block_header().try_to_vec()?
+        }
+        QueryMsg::MinStorageBalanceForSubmitter {} => {
+            state.min_storage_balance_for_submitter().try_to_vec()?
+        }
+        QueryMsg::GetLightClientState {} => state.get_light_client_state().try_to_vec()?,
+        QueryMsg::IsSubmitterRegistered { account_id } => state
+            .is_submitter_registered(near_sdk::AccountId::new_unchecked(account_id))
+            .try_to_vec()?,
+        QueryMsg::GetNumOfSubmittedBlocksByAccount { account_id } => state
+            .get_num_of_submitted_blocks_by_account(near_sdk::AccountId::new_unchecked(account_id))
+            .try_to_vec()?,
+        QueryMsg::GetMaxSubmittedBlocksByAccount {} => {
+            state.get_max_submitted_blocks_by_account().try_to_vec()?
+        }
+        QueryMsg::GetTrustedSigner {} => state.get_trusted_signer().try_to_vec()?,
+    };
+    Ok(to_binary(&GenericQueryResponse { borsh: res })?)
 }

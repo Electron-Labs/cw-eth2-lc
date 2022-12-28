@@ -44,7 +44,7 @@ impl FromStr for Network {
             "kiln" => Ok(Network::Kiln),
             "ropsten" => Ok(Network::Ropsten),
             "goerli" => Ok(Network::Goerli),
-            _ => Err(format!("Unknown network {}", input)),
+            _ => Err(format!("Unknown network {input}")),
         }
     }
 }

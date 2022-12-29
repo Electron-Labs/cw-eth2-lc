@@ -10,7 +10,7 @@ use eth2_utility::types::*;
 use eth_types::eth2::*;
 use eth_types::{BlockHeader, H256};
 
-use near_sdk::{assert_self, env, require, AccountId, PanicOnDefault};
+use near_sdk::{assert_self, require, AccountId, PanicOnDefault};
 
 use tree_hash::TreeHash;
 
@@ -62,7 +62,7 @@ pub struct Eth2ClientState {
 impl Eth2Client {
     pub fn init(ctx: Context, args: InitInput) -> Self {
         let network =
-            Network::from_str(args.network.as_str()).unwrap_or_else(|e| env::panic_str(e.as_str()));
+            Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
 
         #[cfg(feature = "mainnet")]
         {
@@ -87,7 +87,7 @@ impl Eth2Client {
         let finalized_execution_header_info = ExecutionHeaderInfo {
             parent_hash: args.finalized_execution_header.parent_hash,
             block_number: args.finalized_execution_header.number,
-            submitter: env::predecessor_account_id(),
+            submitter: AccountId::new_unchecked(ctx.info.clone().unwrap().sender.to_string()),
         };
 
         Self {
@@ -160,7 +160,7 @@ impl Eth2Client {
     }
 
     pub fn register_submitter(&mut self) {
-        let account_id = env::predecessor_account_id();
+        let account_id = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
         require!(
             !self.state.submitters.contains_key(&account_id),
             "The account is already registered"
@@ -170,9 +170,9 @@ impl Eth2Client {
     }
 
     pub fn unregister_submitter(&mut self) {
-        let account_id = env::predecessor_account_id();
+        let account_id = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
         if self.state.submitters.remove(&account_id).is_none() {
-            env::panic_str("The account is not registered");
+            panic!("{}", "The account is not registered");
         }
     }
 
@@ -185,7 +185,7 @@ impl Eth2Client {
             .state
             .submitters
             .get(&account_id)
-            .unwrap_or_else(|| env::panic_str("The account is not registered"))
+            .unwrap_or_else(|| panic!("{}", "The account is not registered"))
     }
 
     pub fn get_max_submitted_blocks_by_account(&self) -> u32 {
@@ -208,7 +208,8 @@ impl Eth2Client {
                 .unfinalized_headers
                 .get(&block_header.parent_hash.try_to_vec().unwrap())
                 .unwrap_or_else(|| {
-                    env::panic_str(
+                    panic!(
+                        "{}",
                         format!(
                             "Header has unknown parent {:?}. Parent should be submitted first.",
                             block_header.parent_hash
@@ -218,7 +219,7 @@ impl Eth2Client {
                 });
         }
 
-        let submitter = env::predecessor_account_id();
+        let submitter = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
         self.update_submitter(&submitter, 1);
         let block_hash = block_header.calculate_hash();
         #[cfg(feature = "logs")]
@@ -350,7 +351,7 @@ impl Eth2Client {
             let sync_committee_update = update
                 .sync_committee_update
                 .as_ref()
-                .unwrap_or_else(|| env::panic_str("The sync committee update is missed"));
+                .unwrap_or_else(|| panic!("{}", "The sync committee update is missed"));
             let branch = convert_branch(&sync_committee_update.next_sync_committee_branch);
             require!(
                 merkle_proof::verify_merkle_proof(
@@ -397,7 +398,7 @@ impl Eth2Client {
             get_participant_pubkeys(&sync_committee.pubkeys.0, &sync_committee_bits);
         let fork_version = config
             .compute_fork_version_by_slot(update.signature_slot)
-            .unwrap_or_else(|| env::panic_str("Unsupported fork"));
+            .unwrap_or_else(|| panic!("{}", "Unsupported fork"));
         let domain = compute_domain(
             DOMAIN_SYNC_COMMITTEE,
             fork_version,
@@ -429,7 +430,7 @@ impl Eth2Client {
             .state
             .unfinalized_headers
             .get(&finalized_header.execution_block_hash.try_to_vec().unwrap())
-            .unwrap_or_else(|| env::panic_str("Unknown execution block hash"))
+            .unwrap_or_else(|| panic!("{}", "Unknown execution block hash"))
             .clone();
         #[cfg(feature = "logs")]
         env::log_str(
@@ -468,7 +469,8 @@ impl Eth2Client {
                 .unfinalized_headers
                 .get(&cursor_header.parent_hash.try_to_vec().unwrap())
                 .unwrap_or_else(|| {
-                    env::panic_str(
+                    panic!(
+                        "{}",
                         format!(
                             "Header has unknown parent {:?}. Parent should be submitted first.",
                             cursor_header.parent_hash
@@ -542,7 +544,10 @@ impl Eth2Client {
     fn update_submitter(&mut self, submitter: &AccountId, value: i64) {
         let mut num_of_submitted_headers: i64 =
             *self.state.submitters.get(submitter).unwrap_or_else(|| {
-                env::panic_str("The account can't submit blocks because it is not registered")
+                panic!(
+                    "{}",
+                    "The account can't submit blocks because it is not registered"
+                )
             }) as i64;
 
         num_of_submitted_headers += value;
@@ -561,7 +566,8 @@ impl Eth2Client {
     fn is_light_client_update_allowed(&self) {
         if let Some(trusted_signer) = &self.state.trusted_signer {
             require!(
-                &env::predecessor_account_id() == trusted_signer,
+                &AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string())
+                    == trusted_signer,
                 "Eth-client is deployed as trust mode, only trusted_signer can update the client"
             );
         }

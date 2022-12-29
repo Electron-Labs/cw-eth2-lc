@@ -21,6 +21,8 @@ tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b
 tree_hash_derive = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec", optional = true }
 eth2_serde_utils = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec", optional = true }
 hex = "0.4.0"
+sha2 = "0.10.6"
+sha3 = "0.10.6"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 serde-big-array = "0.4.1"

@@ -24,7 +24,6 @@ const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO remove accountId
-// TODO remove all instances of env
 // TODO remove all borsh from contract interface
 // TODO remove near from crate
 
@@ -33,6 +32,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO rename crates - directory structure
 // TODO remove uneeded deps
 // TODO try types from substrate implementation - https://github.com/webb-tools/pallet-eth2-light-client
+// TODO add logs
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

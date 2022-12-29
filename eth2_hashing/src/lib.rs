@@ -9,19 +9,20 @@
 
 #[cfg(feature = "zero_hash_cache")]
 use lazy_static::lazy_static;
+use sha2::Digest;
 
 /// Length of a SHA256 hash in bytes.
 pub const HASH_LEN: usize = 32;
 
 /// Returns the digest of `input` using the best available implementation.
 pub fn hash(input: &[u8]) -> Vec<u8> {
-    near_sdk::env::sha256(input)
+    sha2::Sha256::digest(input).to_vec()
 }
 
 /// Hash function returning a fixed-size array (to save on allocations).
 pub fn hash_fixed(input: &[u8]) -> [u8; HASH_LEN] {
     let mut buffer = [0u8; HASH_LEN];
-    buffer.copy_from_slice(near_sdk::env::sha256(input).as_slice());
+    buffer.copy_from_slice(&sha2::Sha256::digest(input));
     buffer
 }
 

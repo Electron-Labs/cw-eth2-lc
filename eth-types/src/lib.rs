@@ -10,6 +10,7 @@ use rlp::{
 use rlp_derive::RlpDecodable as RlpDecodableDerive;
 #[cfg(not(target_arch = "wasm32"))]
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
 use std::io::{Error, Write};
 #[cfg(feature = "eth2")]
 use tree_hash::{Hash256, TreeHash, TreeHashType};
@@ -448,18 +449,18 @@ impl From<RlpDeriveReceipt> for Receipt {
 
 pub fn near_sha256(data: &[u8]) -> [u8; 32] {
     let mut buffer = [0u8; 32];
-    buffer.copy_from_slice(near_sdk::env::sha256(data).as_slice());
+    buffer.copy_from_slice(&sha2::Sha256::digest(data));
     buffer
 }
 
 pub fn near_keccak256(data: &[u8]) -> [u8; 32] {
     let mut buffer = [0u8; 32];
-    buffer.copy_from_slice(near_sdk::env::keccak256(data).as_slice());
+    buffer.copy_from_slice(&sha3::Keccak256::digest(data));
     buffer
 }
 
 pub fn near_keccak512(data: &[u8]) -> [u8; 64] {
     let mut buffer = [0u8; 64];
-    buffer.copy_from_slice(near_sdk::env::keccak512(data).as_slice());
+    buffer.copy_from_slice(&sha3::Keccak512::digest(data));
     buffer
 }

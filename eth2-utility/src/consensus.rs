@@ -5,7 +5,7 @@ use bitvec::prelude::BitVec;
 use borsh::{BorshDeserialize, BorshSerialize};
 use eth_types::eth2::*;
 use eth_types::H256;
-use near_sdk::{env, Balance};
+
 use tree_hash::TreeHash;
 
 pub const EPOCHS_PER_SYNC_COMMITTEE_PERIOD: u64 = 256;

@@ -10,7 +10,7 @@ use eth_types::{eth2::LightClientUpdate, BlockHeader};
 use crate::{error::ContractError, msg::GenericQueryResponse, rainbow};
 use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::STATE_KEY,
+    state::STATE,
 };
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
@@ -19,13 +19,11 @@ use borsh::BorshSerialize;
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO we dont need to deserialize 50k headers on every call
 // TODO remove unwraps
 // TODO remove accountId
-// TODO remove promises
 // TODO remove all instances of env
-// TODO use cosmwasm friendly datastructures, near datastructures are calling env under the hood
 // TODO remove all borsh from contract interface
+// TODO use cosmwasm Maps, dont deserialize entire mapping for every call
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -37,7 +35,7 @@ pub fn instantiate(
     let args = InitInput::try_from_slice(msg.borsh.as_slice())?;
     let state = rainbow::Eth2Client::init(args);
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    deps.storage.set(STATE_KEY, state.try_to_vec()?.as_slice());
+    deps.storage.set(STATE, state.try_to_vec()?.as_slice());
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -47,13 +45,13 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
+    _env: Env,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let mut state = rainbow::Eth2Client::try_from_slice(
         deps.storage
-            .get(STATE_KEY)
+            .get(STATE)
             .ok_or(ContractError::Std(StdError::generic_err(
                 "could not find state",
             )))?
@@ -69,10 +67,11 @@ pub fn execute(
         ExecuteMsg::SubmitExecutionHeader { borsh } => {
             state.submit_execution_header(BlockHeader::try_from_slice(borsh.as_slice())?)
         }
-        ExecuteMsg::UpdateTrustedSigner { trusted_signer } => state
-            .update_trusted_signer(trusted_signer.map(|s| near_sdk::AccountId::new_unchecked(s))),
+        ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
+            state.update_trusted_signer(trusted_signer.map(near_sdk::AccountId::new_unchecked))
+        }
     };
-    deps.storage.set(STATE_KEY, state.try_to_vec()?.as_slice());
+    deps.storage.set(STATE, state.try_to_vec()?.as_slice());
 
     Ok(Response::new())
 }
@@ -86,7 +85,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 pub fn try_query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     let state = rainbow::Eth2Client::try_from_slice(
         deps.storage
-            .get(STATE_KEY)
+            .get(STATE)
             .ok_or(ContractError::Std(StdError::generic_err(
                 "could not find state",
             )))?

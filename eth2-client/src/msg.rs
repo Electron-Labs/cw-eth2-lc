@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use eth2_utility::types::InitInput;
+
 
 #[cw_serde]
 pub struct InstantiateMsg {

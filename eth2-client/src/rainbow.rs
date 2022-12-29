@@ -4,18 +4,28 @@ use std::str::FromStr;
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use borsh::{BorshDeserialize, BorshSerialize};
+use cosmwasm_std::{Env, MessageInfo};
 use eth2_utility::consensus::*;
 use eth2_utility::types::*;
 use eth_types::eth2::*;
 use eth_types::{BlockHeader, H256};
 
-
 use near_sdk::{assert_self, env, require, AccountId, PanicOnDefault};
 
 use tree_hash::TreeHash;
 
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Eth2Client {
+    pub ctx: Context,
+    pub state: Eth2ClientState,
+}
+
+pub struct Context {
+    pub env: Env,
+    pub info: Option<MessageInfo>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct Eth2ClientState {
     /// If set, only light client updates by the trusted signer will be accepted
     trusted_signer: Option<AccountId>,
     /// Whether the client validates the updates.
@@ -50,7 +60,7 @@ pub struct Eth2Client {
 }
 
 impl Eth2Client {
-    pub fn init(args: InitInput) -> Self {
+    pub fn init(ctx: Context, args: InitInput) -> Self {
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| env::panic_str(e.as_str()));
 
@@ -81,25 +91,29 @@ impl Eth2Client {
         };
 
         Self {
-            trusted_signer: args.trusted_signer,
-            validate_updates: args.validate_updates,
-            verify_bls_signatures: args.verify_bls_signatures,
-            hashes_gc_threshold: args.hashes_gc_threshold,
-            network,
-            finalized_execution_blocks: HashMap::new(),
-            unfinalized_headers: HashMap::new(),
-            submitters: HashMap::new(),
-            max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
-            finalized_beacon_header: args.finalized_beacon_header,
-            finalized_execution_header: Some(finalized_execution_header_info),
-            current_sync_committee: Some(args.current_sync_committee),
-            next_sync_committee: Some(args.next_sync_committee),
+            ctx,
+            state: Eth2ClientState {
+                trusted_signer: args.trusted_signer,
+                validate_updates: args.validate_updates,
+                verify_bls_signatures: args.verify_bls_signatures,
+                hashes_gc_threshold: args.hashes_gc_threshold,
+                network,
+                finalized_execution_blocks: HashMap::new(),
+                unfinalized_headers: HashMap::new(),
+                submitters: HashMap::new(),
+                max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
+                finalized_beacon_header: args.finalized_beacon_header,
+                finalized_execution_header: Some(finalized_execution_header_info),
+                current_sync_committee: Some(args.current_sync_committee),
+                next_sync_committee: Some(args.next_sync_committee),
+            },
         }
     }
 
     /// Returns finalized execution block number
     pub fn last_block_number(&self) -> u64 {
-        self.finalized_execution_header
+        self.state
+            .finalized_execution_header
             .clone()
             .unwrap()
             .block_number
@@ -107,77 +121,81 @@ impl Eth2Client {
 
     /// Returns finalized execution block hash
     pub fn block_hash_safe(&self, block_number: u64) -> Option<H256> {
-        self.finalized_execution_blocks
-            .get(&block_number).copied()
+        self.state
+            .finalized_execution_blocks
+            .get(&block_number)
+            .copied()
     }
 
     /// Checks if the execution header is already submitted.
     pub fn is_known_execution_header(&self, hash: H256) -> bool {
-        self.unfinalized_headers
+        self.state
+            .unfinalized_headers
             .get(&hash.try_to_vec().unwrap())
             .is_some()
     }
 
     /// Get finalized beacon block root
     pub fn finalized_beacon_block_root(&self) -> H256 {
-        self.finalized_beacon_header.beacon_block_root
+        self.state.finalized_beacon_header.beacon_block_root
     }
 
     /// Returns finalized beacon block slot
     pub fn finalized_beacon_block_slot(&self) -> u64 {
-        self.finalized_beacon_header.header.slot
+        self.state.finalized_beacon_header.header.slot
     }
 
     /// Returns finalized beacon block header
     pub fn finalized_beacon_block_header(&self) -> ExtendedBeaconBlockHeader {
-        self.finalized_beacon_header.clone()
+        self.state.finalized_beacon_header.clone()
     }
 
     /// Get the current light client state
     pub fn get_light_client_state(&self) -> LightClientState {
         LightClientState {
-            finalized_beacon_header: self.finalized_beacon_header.clone(),
-            current_sync_committee: self.current_sync_committee.clone().unwrap(),
-            next_sync_committee: self.next_sync_committee.clone().unwrap(),
+            finalized_beacon_header: self.state.finalized_beacon_header.clone(),
+            current_sync_committee: self.state.current_sync_committee.clone().unwrap(),
+            next_sync_committee: self.state.next_sync_committee.clone().unwrap(),
         }
     }
 
     pub fn register_submitter(&mut self) {
         let account_id = env::predecessor_account_id();
         require!(
-            !self.submitters.contains_key(&account_id),
+            !self.state.submitters.contains_key(&account_id),
             "The account is already registered"
         );
 
-        self.submitters.insert(account_id, 0);
+        self.state.submitters.insert(account_id, 0);
     }
 
     pub fn unregister_submitter(&mut self) {
         let account_id = env::predecessor_account_id();
-        if self.submitters.remove(&account_id).is_none() {
+        if self.state.submitters.remove(&account_id).is_none() {
             env::panic_str("The account is not registered");
         }
     }
 
     pub fn is_submitter_registered(&self, account_id: AccountId) -> bool {
-        self.submitters.contains_key(&account_id)
+        self.state.submitters.contains_key(&account_id)
     }
 
     pub fn get_num_of_submitted_blocks_by_account(&self, account_id: AccountId) -> u32 {
         *self
+            .state
             .submitters
             .get(&account_id)
             .unwrap_or_else(|| env::panic_str("The account is not registered"))
     }
 
     pub fn get_max_submitted_blocks_by_account(&self) -> u32 {
-        self.max_submitted_blocks_by_account
+        self.state.max_submitted_blocks_by_account
     }
 
     pub fn submit_beacon_chain_light_client_update(&mut self, update: LightClientUpdate) {
         self.is_light_client_update_allowed();
 
-        if self.validate_updates {
+        if self.state.validate_updates {
             self.validate_light_client_update(&update);
         }
 
@@ -185,8 +203,9 @@ impl Eth2Client {
     }
 
     pub fn submit_execution_header(&mut self, block_header: BlockHeader) {
-        if self.finalized_beacon_header.execution_block_hash != block_header.parent_hash {
-            self.unfinalized_headers
+        if self.state.finalized_beacon_header.execution_block_hash != block_header.parent_hash {
+            self.state
+                .unfinalized_headers
                 .get(&block_header.parent_hash.try_to_vec().unwrap())
                 .unwrap_or_else(|| {
                     env::panic_str(
@@ -217,6 +236,7 @@ impl Eth2Client {
             submitter,
         };
         let insert_result = self
+            .state
             .unfinalized_headers
             .insert(block_hash.try_to_vec().unwrap(), block_info);
         require!(
@@ -227,11 +247,11 @@ impl Eth2Client {
 
     pub fn update_trusted_signer(&mut self, trusted_signer: Option<AccountId>) {
         assert_self();
-        self.trusted_signer = trusted_signer;
+        self.state.trusted_signer = trusted_signer;
     }
 
     pub fn get_trusted_signer(&self) -> Option<AccountId> {
-        self.trusted_signer.clone()
+        self.state.trusted_signer.clone()
     }
 }
 
@@ -241,7 +261,7 @@ impl Eth2Client {
         env::log_str(format!("Validate update. Used gas: {}", env::used_gas().0).as_str());
 
         let finalized_period =
-            compute_sync_committee_period(self.finalized_beacon_header.header.slot);
+            compute_sync_committee_period(self.state.finalized_beacon_header.header.slot);
         self.verify_finality_branch(update, finalized_period);
 
         // Verify sync committee has sufficient participants
@@ -251,9 +271,7 @@ impl Eth2Client {
 
         require!(
             sync_committee_bits_sum >= MIN_SYNC_COMMITTEE_PARTICIPANTS,
-            format!(
-                "Invalid sync committee bits sum: {sync_committee_bits_sum}"
-            )
+            format!("Invalid sync committee bits sum: {sync_committee_bits_sum}")
         );
 
         require!(
@@ -264,8 +282,9 @@ impl Eth2Client {
         );
 
         #[cfg(feature = "bls")]
-        if self.verify_bls_signatures {
-            self.verify_bls_signatures(update, sync_committee_bits, finalized_period);
+        if self.state.verify_bls_signatures {
+            self.state
+                .verify_bls_signatures(update, sync_committee_bits, finalized_period);
         }
 
         #[cfg(feature = "logs")]
@@ -277,7 +296,7 @@ impl Eth2Client {
         let active_header = &update.finality_update.header_update.beacon_header;
 
         require!(
-            active_header.slot > self.finalized_beacon_header.header.slot,
+            active_header.slot > self.state.finalized_beacon_header.header.slot,
             "The active header slot number should be higher than the finalized slot"
         );
 
@@ -353,7 +372,7 @@ impl Eth2Client {
         sync_committee_bits: BitVec<u8>,
         finalized_period: u64,
     ) {
-        let config = NetworkConfig::new(&self.network);
+        let config = NetworkConfig::new(&self.state.network);
         let signature_period = compute_sync_committee_period(update.signature_slot);
 
         // Verify signature period does not skip a sync committee period
@@ -369,9 +388,9 @@ impl Eth2Client {
 
         // Verify sync committee aggregate signature
         let sync_committee = if signature_period == finalized_period {
-            self.current_sync_committee.get().unwrap()
+            self.state.current_sync_committee.get().unwrap()
         } else {
-            self.next_sync_committee.get().unwrap()
+            self.state.next_sync_committee.get().unwrap()
         };
 
         let participant_pubkeys =
@@ -407,6 +426,7 @@ impl Eth2Client {
         #[cfg(feature = "logs")]
         env::log_str(format!("Update finalized header. Used gas: {}", env::used_gas().0).as_str());
         let finalized_execution_header_info = self
+            .state
             .unfinalized_headers
             .get(&finalized_header.execution_block_hash.try_to_vec().unwrap())
             .unwrap_or_else(|| env::panic_str("Unknown execution block hash"))
@@ -415,7 +435,7 @@ impl Eth2Client {
         env::log_str(
             format!(
                 "Current finalized slot: {}, New finalized slot: {}",
-                self.finalized_beacon_header.header.slot, finalized_header.header.slot
+                self.state.finalized_beacon_header.header.slot, finalized_header.header.slot
             )
             .as_str(),
         );
@@ -430,17 +450,21 @@ impl Eth2Client {
                 .unwrap_or(&0);
             submitters_update.insert(cursor_header.submitter, num_of_removed_headers + 1);
 
-            self.unfinalized_headers
+            self.state
+                .unfinalized_headers
                 .remove(&cursor_header_hash.try_to_vec().unwrap());
-            self.finalized_execution_blocks
+            self.state
+                .finalized_execution_blocks
                 .insert(cursor_header.block_number, cursor_header_hash);
 
-            if cursor_header.parent_hash == self.finalized_beacon_header.execution_block_hash {
+            if cursor_header.parent_hash == self.state.finalized_beacon_header.execution_block_hash
+            {
                 break;
             }
 
             cursor_header_hash = cursor_header.parent_hash;
             cursor_header = self
+                .state
                 .unfinalized_headers
                 .get(&cursor_header.parent_hash.try_to_vec().unwrap())
                 .unwrap_or_else(|| {
@@ -454,8 +478,8 @@ impl Eth2Client {
                 })
                 .clone();
         }
-        self.finalized_beacon_header = finalized_header;
-        self.finalized_execution_header = Some(finalized_execution_header_info.clone());
+        self.state.finalized_beacon_header = finalized_header;
+        self.state.finalized_execution_header = Some(finalized_execution_header_info.clone());
 
         for (submitter, num_of_removed_headers) in &submitters_update {
             self.update_submitter(submitter, -(*num_of_removed_headers as i64));
@@ -470,9 +494,9 @@ impl Eth2Client {
             .as_str(),
         );
 
-        if finalized_execution_header_info.block_number > self.hashes_gc_threshold {
+        if finalized_execution_header_info.block_number > self.state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(
-                finalized_execution_header_info.block_number - self.hashes_gc_threshold,
+                finalized_execution_header_info.block_number - self.state.hashes_gc_threshold,
             );
         }
     }
@@ -481,13 +505,14 @@ impl Eth2Client {
         // Update finalized header
         let finalized_header_update = update.finality_update.header_update;
         let finalized_period =
-            compute_sync_committee_period(self.finalized_beacon_header.header.slot);
+            compute_sync_committee_period(self.state.finalized_beacon_header.header.slot);
         let update_period =
             compute_sync_committee_period(finalized_header_update.beacon_header.slot);
 
         if update_period == finalized_period + 1 {
-            self.current_sync_committee = Some(self.next_sync_committee.clone().unwrap());
-            self.next_sync_committee =
+            self.state.current_sync_committee =
+                Some(self.state.next_sync_committee.clone().unwrap());
+            self.state.next_sync_committee =
                 Some(update.sync_committee_update.unwrap().next_sync_committee);
         }
 
@@ -498,6 +523,7 @@ impl Eth2Client {
     fn gc_finalized_execution_blocks(&mut self, mut header_number: u64) {
         loop {
             if self
+                .state
                 .finalized_execution_blocks
                 .remove(&header_number)
                 .is_some()
@@ -515,25 +541,25 @@ impl Eth2Client {
 
     fn update_submitter(&mut self, submitter: &AccountId, value: i64) {
         let mut num_of_submitted_headers: i64 =
-            *self.submitters.get(submitter).unwrap_or_else(|| {
+            *self.state.submitters.get(submitter).unwrap_or_else(|| {
                 env::panic_str("The account can't submit blocks because it is not registered")
             }) as i64;
 
         num_of_submitted_headers += value;
 
         require!(
-            num_of_submitted_headers <= self.max_submitted_blocks_by_account.into(),
+            num_of_submitted_headers <= self.state.max_submitted_blocks_by_account.into(),
             "The submitter exhausted the limit of blocks"
         );
 
-        self.submitters.insert(
+        self.state.submitters.insert(
             submitter.clone(),
             num_of_submitted_headers.try_into().unwrap(),
         );
     }
 
     fn is_light_client_update_allowed(&self) {
-        if let Some(trusted_signer) = &self.trusted_signer {
+        if let Some(trusted_signer) = &self.state.trusted_signer {
             require!(
                 &env::predecessor_account_id() == trusted_signer,
                 "Eth-client is deployed as trust mode, only trusted_signer can update the client"

@@ -21,6 +21,12 @@ const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO we dont need to deserialize 50k headers on every call
+// TODO remove unwraps
+// TODO remove accountId
+// TODO remove promises
+// TODO remove all instances of env
+// TODO use cosmwasm friendly datastructures, near datastructures are calling env under the hood
+
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

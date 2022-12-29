@@ -7,7 +7,13 @@ pub struct InstantiateMsg {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg {}
+pub enum ExecuteMsg {
+    RegisterSubmitter {},
+    UnRegisterSubmitter {},
+    SubmitBeaconChainLightClientUpdate { borsh: Vec<u8> },
+    SubmitExecutionHeader { borsh: Vec<u8> },
+    UpdateTrustedSigner { trusted_signer: Option<String> },
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -37,9 +43,9 @@ pub enum QueryMsg {
     #[returns(GenericQueryResponse)]
     GetNumOfSubmittedBlocksByAccount { account_id: String },
     #[returns(GenericQueryResponse)]
-    GetMaxSubmittedBlocksByAccount { },
+    GetMaxSubmittedBlocksByAccount {},
     #[returns(GenericQueryResponse)]
-    GetTrustedSigner { },
+    GetTrustedSigner {},
 }
 
 // We define a custom struct for each query response

@@ -1,3 +1,4 @@
+
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -5,6 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use eth2_utility::types::InitInput;
+use eth_types::{eth2::LightClientUpdate, BlockHeader};
 
 use crate::{error::ContractError, msg::GenericQueryResponse, rainbow};
 use crate::{
@@ -39,18 +41,40 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    match msg {}
+    let mut state = rainbow::Eth2Client::try_from_slice(
+        deps.storage
+            .get(STATE_KEY)
+            .ok_or(ContractError::Std(StdError::generic_err(
+                "could not find state",
+            )))?
+            .as_slice(),
+    )?;
+    match msg {
+        ExecuteMsg::RegisterSubmitter {} => state.register_submitter(),
+        ExecuteMsg::UnRegisterSubmitter {} => state.unregister_submitter(),
+        ExecuteMsg::SubmitBeaconChainLightClientUpdate { borsh } => state
+            .submit_beacon_chain_light_client_update(LightClientUpdate::try_from_slice(
+                borsh.as_slice(),
+            )?),
+        ExecuteMsg::SubmitExecutionHeader { borsh } => {
+            state.submit_execution_header(BlockHeader::try_from_slice(borsh.as_slice())?)
+        }
+        ExecuteMsg::UpdateTrustedSigner { trusted_signer } => state
+            .update_trusted_signer(trusted_signer.map(|s| near_sdk::AccountId::new_unchecked(s))),
+    };
+    deps.storage.set(STATE_KEY, state.try_to_vec()?.as_slice());
+
+    Ok(Response::new())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let res = try_query(deps, env, msg).map_err(|e| StdError::generic_err(e.to_string()))?;
-
     Ok(res)
 }
 

@@ -14,7 +14,6 @@ use near_sdk::{assert_self, env, near_bindgen, require, AccountId, PanicOnDefaul
 use near_sdk::{Balance, BorshStorageKey, Promise};
 use tree_hash::TreeHash;
 
-
 #[derive(BorshSerialize, BorshStorageKey)]
 enum StorageKey {
     FinalizedExecutionBlocks,
@@ -209,14 +208,14 @@ impl Eth2Client {
         }
     }
 
-    pub fn unregister_submitter(&mut self) -> Promise {
+    pub fn unregister_submitter(&mut self) {
         let account_id = env::predecessor_account_id();
         if let Some(num_of_submitted_blocks) = self.submitters.remove(&account_id) {
             if num_of_submitted_blocks > 0 {
                 env::panic_str("Can't unregister the account with used storage")
             }
 
-            Promise::new(account_id).transfer(self.min_storage_balance_for_submitter)
+            Promise::new(account_id).transfer(self.min_storage_balance_for_submitter);
         } else {
             env::panic_str("The account is not registered");
         }

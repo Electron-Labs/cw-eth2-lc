@@ -10,7 +10,7 @@ use eth2_utility::types::*;
 use eth_types::eth2::*;
 use eth_types::{BlockHeader, H256};
 
-use near_sdk::{assert_self, require, AccountId, PanicOnDefault};
+use near_sdk::AccountId;
 
 use tree_hash::TreeHash;
 
@@ -24,7 +24,7 @@ pub struct Context {
     pub info: Option<MessageInfo>,
 }
 
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct Eth2ClientState {
     /// If set, only light client updates by the trusted signer will be accepted
     trusted_signer: Option<AccountId>,
@@ -66,19 +66,19 @@ impl Eth2Client {
 
         #[cfg(feature = "mainnet")]
         {
-            require!(
+            assert!(
                 args.validate_updates,
                 "The updates validation can't be disabled for mainnet"
             );
 
-            require!(
+            assert!(
                 (cfg!(feature = "bls") && args.verify_bls_signatures)
                     || args.trusted_signer.is_some(),
                 "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
             );
         }
 
-        require!(
+        assert!(
             args.finalized_execution_header.calculate_hash()
                 == args.finalized_beacon_header.execution_block_hash,
             "Invalid execution block"
@@ -160,8 +160,9 @@ impl Eth2Client {
     }
 
     pub fn register_submitter(&mut self) {
-        let account_id = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
-        require!(
+        let account_id =
+            AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
+        assert!(
             !self.state.submitters.contains_key(&account_id),
             "The account is already registered"
         );
@@ -170,7 +171,8 @@ impl Eth2Client {
     }
 
     pub fn unregister_submitter(&mut self) {
-        let account_id = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
+        let account_id =
+            AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
         if self.state.submitters.remove(&account_id).is_none() {
             panic!("{}", "The account is not registered");
         }
@@ -240,14 +242,15 @@ impl Eth2Client {
             .state
             .unfinalized_headers
             .insert(block_hash.try_to_vec().unwrap(), block_info);
-        require!(
+        assert!(
             insert_result.is_none(),
-            format!("The block {} already submitted!", &block_hash)
+            "{}",
+            format!("The block {} already submitted!", &block_hash).as_str()
         );
     }
 
     pub fn update_trusted_signer(&mut self, trusted_signer: Option<AccountId>) {
-        assert_self();
+        assert!(self.ctx.info.clone().unwrap().sender == self.ctx.env.contract.address);
         self.state.trusted_signer = trusted_signer;
     }
 
@@ -270,14 +273,15 @@ impl Eth2Client {
             BitVec::<u8, Lsb0>::from_slice(&update.sync_aggregate.sync_committee_bits.0);
         let sync_committee_bits_sum: u64 = sync_committee_bits.count_ones().try_into().unwrap();
 
-        require!(
+        assert!(
             sync_committee_bits_sum >= MIN_SYNC_COMMITTEE_PARTICIPANTS,
-            format!("Invalid sync committee bits sum: {sync_committee_bits_sum}")
+            "{}",
+            format!("Invalid sync committee bits sum: {sync_committee_bits_sum}").as_str()
         );
 
-        require!(
+        assert!(
             sync_committee_bits_sum * 3 >= (sync_committee_bits.len() * 2).try_into().unwrap(),
-            format!(
+            "{}",format!(
                 "Sync committee bits sum is less than 2/3 threshold, bits sum: {sync_committee_bits_sum}"
             )
         );
@@ -296,37 +300,39 @@ impl Eth2Client {
         // The active header will always be the finalized header because we don't accept updates without the finality update.
         let active_header = &update.finality_update.header_update.beacon_header;
 
-        require!(
+        assert!(
             active_header.slot > self.state.finalized_beacon_header.header.slot,
             "The active header slot number should be higher than the finalized slot"
         );
 
-        require!(
+        assert!(
             update.attested_beacon_header.slot
                 >= update.finality_update.header_update.beacon_header.slot,
             "The attested header slot should be equal to or higher than the finalized header slot"
         );
 
-        require!(
+        assert!(
             update.signature_slot > update.attested_beacon_header.slot,
             "The signature slot should be higher than the attested header slot"
         );
 
         let update_period = compute_sync_committee_period(active_header.slot);
-        require!(
+        assert!(
             update_period == finalized_period || update_period == finalized_period + 1,
+            "{}",
             format!(
                 "The acceptable update periods are '{}' and '{}' but got {}",
                 finalized_period,
                 finalized_period + 1,
                 update_period
             )
+            .as_str()
         );
 
         // Verify that the `finality_branch`, confirms `finalized_header`
         // to match the finalized checkpoint root saved in the state of `attested_header`.
         let branch = convert_branch(&update.finality_update.finality_branch);
-        require!(
+        assert!(
             merkle_proof::verify_merkle_proof(
                 update
                     .finality_update
@@ -340,7 +346,7 @@ impl Eth2Client {
             ),
             "Invalid finality proof"
         );
-        require!(
+        assert!(
             validate_beacon_block_header_update(&update.finality_update.header_update),
             "Invalid execution block hash proof"
         );
@@ -353,7 +359,7 @@ impl Eth2Client {
                 .as_ref()
                 .unwrap_or_else(|| panic!("{}", "The sync committee update is missed"));
             let branch = convert_branch(&sync_committee_update.next_sync_committee_branch);
-            require!(
+            assert!(
                 merkle_proof::verify_merkle_proof(
                     sync_committee_update.next_sync_committee.tree_hash_root(),
                     &branch,
@@ -377,8 +383,9 @@ impl Eth2Client {
         let signature_period = compute_sync_committee_period(update.signature_slot);
 
         // Verify signature period does not skip a sync committee period
-        require!(
+        assert!(
             signature_period == finalized_period || signature_period == finalized_period + 1,
+            "{}",
             format!(
                 "The acceptable signature periods are '{}' and '{}' but got {}",
                 finalized_period,
@@ -416,7 +423,7 @@ impl Eth2Client {
             .into_iter()
             .map(|x| bls::PublicKey::deserialize(&x.0).unwrap())
             .collect();
-        require!(
+        assert!(
             aggregate_signature
                 .fast_aggregate_verify(signing_root.0, &pubkeys.iter().collect::<Vec<_>>()),
             "Failed to verify the bls signature"
@@ -552,7 +559,7 @@ impl Eth2Client {
 
         num_of_submitted_headers += value;
 
-        require!(
+        assert!(
             num_of_submitted_headers <= self.state.max_submitted_blocks_by_account.into(),
             "The submitter exhausted the limit of blocks"
         );
@@ -565,7 +572,7 @@ impl Eth2Client {
 
     fn is_light_client_update_allowed(&self) {
         if let Some(trusted_signer) = &self.state.trusted_signer {
-            require!(
+            assert!(
                 &AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string())
                     == trusted_signer,
                 "Eth-client is deployed as trust mode, only trusted_signer can update the client"

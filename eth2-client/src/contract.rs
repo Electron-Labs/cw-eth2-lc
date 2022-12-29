@@ -33,6 +33,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO remove uneeded deps
 // TODO try types from substrate implementation - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO add logs
+// TODO prevent reinstantiation attacks
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

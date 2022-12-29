@@ -24,7 +24,6 @@ enum StorageKey {
     NextSyncCommittee,
 }
 
-#[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Eth2Client {
     /// If set, only light client updates by the trusted signer will be accepted
@@ -53,8 +52,6 @@ pub struct Eth2Client {
     /// Max number of unfinalized blocks allowed to be stored by one submitter account
     /// This value should be at least 32 blocks (1 epoch), but the recommended value is 1024 (32 epochs)
     max_submitted_blocks_by_account: u32,
-    // The minimum balance that should be attached to register a new submitter account
-    min_storage_balance_for_submitter: Balance,
     /// Light client state
     finalized_beacon_header: ExtendedBeaconBlockHeader,
     finalized_execution_header: LazyOption<ExecutionHeaderInfo>,
@@ -62,13 +59,8 @@ pub struct Eth2Client {
     next_sync_committee: LazyOption<SyncCommittee>,
 }
 
-#[near_bindgen]
 impl Eth2Client {
-    #[init]
-    #[private]
-    pub fn init(#[serializer(borsh)] args: InitInput) -> Self {
-        let min_storage_balance_for_submitter =
-            calculate_min_storage_balance_for_submitter(args.max_submitted_blocks_by_account);
+    pub fn init(args: InitInput) -> Self {
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| env::panic_str(e.as_str()));
 
@@ -108,7 +100,6 @@ impl Eth2Client {
             unfinalized_headers: UnorderedMap::new(StorageKey::UnfinalizedHeaders),
             submitters: LookupMap::new(StorageKey::Submitters),
             max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
-            min_storage_balance_for_submitter,
             finalized_beacon_header: args.finalized_beacon_header,
             finalized_execution_header: LazyOption::new(
                 StorageKey::FinalizedExecutionHeader,
@@ -125,55 +116,37 @@ impl Eth2Client {
         }
     }
 
-    #[result_serializer(borsh)]
-    pub fn initialized() -> bool {
-        env::state_read::<Eth2Client>().is_some()
-    }
-
     /// Returns finalized execution block number
-    #[result_serializer(borsh)]
     pub fn last_block_number(&self) -> u64 {
         self.finalized_execution_header.get().unwrap().block_number
     }
 
     /// Returns finalized execution block hash
-    #[result_serializer(borsh)]
-    pub fn block_hash_safe(&self, #[serializer(borsh)] block_number: u64) -> Option<H256> {
+    pub fn block_hash_safe(&self, block_number: u64) -> Option<H256> {
         self.finalized_execution_blocks.get(&block_number)
     }
 
     /// Checks if the execution header is already submitted.
-    #[result_serializer(borsh)]
-    pub fn is_known_execution_header(&self, #[serializer(borsh)] hash: H256) -> bool {
+    pub fn is_known_execution_header(&self, hash: H256) -> bool {
         self.unfinalized_headers.get(&hash).is_some()
     }
 
     /// Get finalized beacon block root
-    #[result_serializer(borsh)]
     pub fn finalized_beacon_block_root(&self) -> H256 {
         self.finalized_beacon_header.beacon_block_root
     }
 
     /// Returns finalized beacon block slot
-    #[result_serializer(borsh)]
     pub fn finalized_beacon_block_slot(&self) -> u64 {
         self.finalized_beacon_header.header.slot
     }
 
     /// Returns finalized beacon block header
-    #[result_serializer(borsh)]
     pub fn finalized_beacon_block_header(&self) -> ExtendedBeaconBlockHeader {
         self.finalized_beacon_header.clone()
     }
 
-    /// Returns the minimum balance that should be attached to register a new submitter account
-    #[result_serializer(borsh)]
-    pub fn min_storage_balance_for_submitter(&self) -> Balance {
-        self.min_storage_balance_for_submitter
-    }
-
     /// Get the current light client state
-    #[result_serializer(borsh)]
     pub fn get_light_client_state(&self) -> LightClientState {
         LightClientState {
             finalized_beacon_header: self.finalized_beacon_header.clone(),
@@ -182,7 +155,6 @@ impl Eth2Client {
         }
     }
 
-    #[payable]
     pub fn register_submitter(&mut self) {
         let account_id = env::predecessor_account_id();
         require!(
@@ -190,33 +162,12 @@ impl Eth2Client {
             "The account is already registered"
         );
 
-        let amount = env::attached_deposit();
-        require!(
-            amount >= self.min_storage_balance_for_submitter,
-            format!(
-                "The attached deposit {} is less than the minimum required storage balance {}",
-                amount, self.min_storage_balance_for_submitter
-            )
-        );
-
         self.submitters.insert(&account_id, &0);
-        let refund = amount
-            .checked_sub(self.min_storage_balance_for_submitter)
-            .unwrap();
-        if refund > 0 {
-            Promise::new(account_id).transfer(refund);
-        }
     }
 
     pub fn unregister_submitter(&mut self) {
         let account_id = env::predecessor_account_id();
-        if let Some(num_of_submitted_blocks) = self.submitters.remove(&account_id) {
-            if num_of_submitted_blocks > 0 {
-                env::panic_str("Can't unregister the account with used storage")
-            }
-
-            Promise::new(account_id).transfer(self.min_storage_balance_for_submitter);
-        } else {
+        if let None = self.submitters.remove(&account_id) {
             env::panic_str("The account is not registered");
         }
     }
@@ -235,10 +186,7 @@ impl Eth2Client {
         self.max_submitted_blocks_by_account
     }
 
-    pub fn submit_beacon_chain_light_client_update(
-        &mut self,
-        #[serializer(borsh)] update: LightClientUpdate,
-    ) {
+    pub fn submit_beacon_chain_light_client_update(&mut self, update: LightClientUpdate) {
         self.is_light_client_update_allowed();
 
         if self.validate_updates {
@@ -248,8 +196,7 @@ impl Eth2Client {
         self.commit_light_client_update(update);
     }
 
-    #[result_serializer(borsh)]
-    pub fn submit_execution_header(&mut self, #[serializer(borsh)] block_header: BlockHeader) {
+    pub fn submit_execution_header(&mut self, block_header: BlockHeader) {
         if self.finalized_beacon_header.execution_block_hash != block_header.parent_hash {
             self.unfinalized_headers
                 .get(&block_header.parent_hash)

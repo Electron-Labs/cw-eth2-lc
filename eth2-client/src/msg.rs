@@ -35,8 +35,6 @@ pub enum QueryMsg {
     #[returns(GenericQueryResponse)]
     FinalizedBeaconBlockHeader {},
     #[returns(GenericQueryResponse)]
-    MinStorageBalanceForSubmitter {},
-    #[returns(GenericQueryResponse)]
     GetLightClientState {},
     #[returns(GenericQueryResponse)]
     IsSubmitterRegistered { account_id: String },

@@ -1,4 +1,3 @@
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -26,7 +25,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO remove promises
 // TODO remove all instances of env
 // TODO use cosmwasm friendly datastructures, near datastructures are calling env under the hood
-
+// TODO remove all borsh from contract interface
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -110,9 +109,6 @@ pub fn try_query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, Contrac
         }
         QueryMsg::FinalizedBeaconBlockHeader {} => {
             state.finalized_beacon_block_header().try_to_vec()?
-        }
-        QueryMsg::MinStorageBalanceForSubmitter {} => {
-            state.min_storage_balance_for_submitter().try_to_vec()?
         }
         QueryMsg::GetLightClientState {} => state.get_light_client_state().try_to_vec()?,
         QueryMsg::IsSubmitterRegistered { account_id } => state

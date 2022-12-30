@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use eth2_client::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use cw_eth2_lc::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     write_api! {

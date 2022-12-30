@@ -19,7 +19,6 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO remove unwraps
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call
-// TODO rename crates - directory structure
 // TODO remove uneeded deps
 // TODO try types from substrate implementation - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO add logs

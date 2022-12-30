@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 
-use eth2_utility::types::ExecutionHeaderInfo;
-use eth_types::{eth2::LightClientUpdate, BlockHeader};
+use types::{eth2::LightClientUpdate, BlockHeader};
+use utility::types::ExecutionHeaderInfo;
 
 use super::Contract;
 

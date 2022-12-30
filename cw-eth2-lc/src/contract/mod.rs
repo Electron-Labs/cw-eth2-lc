@@ -8,13 +8,13 @@ use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use cosmwasm_std::{Addr, Env, MessageInfo};
 
-use eth2_utility::consensus::{
+use tree_hash::TreeHash;
+use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
+use utility::consensus::{
     compute_sync_committee_period, convert_branch, validate_beacon_block_header_update,
     FINALITY_TREE_DEPTH, FINALITY_TREE_INDEX, MIN_SYNC_COMMITTEE_PARTICIPANTS,
     SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX,
 };
-use eth_types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
-use tree_hash::TreeHash;
 
 use crate::state::ContractState;
 
@@ -181,7 +181,7 @@ impl Contract {
             config.genesis_validators_root.into(),
         );
         let signing_root = compute_signing_root(
-            eth_types::H256(update.attested_beacon_header.tree_hash_root()),
+            types::H256(update.attested_beacon_header.tree_hash_root()),
             domain,
         );
 

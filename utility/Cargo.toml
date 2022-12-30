@@ -1,5 +1,5 @@
 [package]
-name = "eth2-utility"
+name = "utility"
 version = "0.1.0"
 authors = ["Aurora <hello@aurora.dev>"]
 edition = "2021"
@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 ethereum-types = "0.9.2"
-eth-types =  { path = "../eth-types" }
+types =  { path = "../types" }
 tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
 merkle_proof = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
 bitvec = "1.0.0"

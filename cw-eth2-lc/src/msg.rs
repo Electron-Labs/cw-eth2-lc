@@ -1,10 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Addr;
-use eth2_utility::types::InitInput;
-use eth_types::{
+use types::{
     eth2::{ExtendedBeaconBlockHeader, LightClientState, LightClientUpdate},
     BlockHeader, H256,
 };
+use utility::types::InitInput;
 
 #[cw_serde]
 pub struct InstantiateMsg(pub InitInput);

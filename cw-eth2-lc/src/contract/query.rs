@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 
-use eth_types::{
+use types::{
     eth2::{ExtendedBeaconBlockHeader, LightClientState},
     H256,
 };

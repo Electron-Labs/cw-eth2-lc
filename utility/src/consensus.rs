@@ -3,7 +3,7 @@ use std::str::FromStr;
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use cosmwasm_schema::cw_serde;
-use eth_types::{
+use types::{
     eth2::{
         DomainType, Epoch, ForkData, ForkVersion, HeaderUpdate, PublicKeyBytes, SigningData, Slot,
     },
@@ -158,7 +158,7 @@ pub fn compute_domain(
 }
 
 pub fn compute_signing_root(object_root: H256, domain: H256) -> H256 {
-    eth_types::H256(
+    types::H256(
         SigningData {
             object_root,
             domain,

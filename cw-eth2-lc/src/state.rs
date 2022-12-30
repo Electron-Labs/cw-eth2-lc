@@ -1,9 +1,9 @@
 use cw_storage_plus::Item;
-use eth2_utility::{consensus::Network, types::ExecutionHeaderInfo};
 use std::collections::HashMap;
+use utility::{consensus::Network, types::ExecutionHeaderInfo};
 
 use cosmwasm_std::Addr;
-use eth_types::{
+use types::{
     eth2::{ExtendedBeaconBlockHeader, SyncCommittee},
     H256,
 };

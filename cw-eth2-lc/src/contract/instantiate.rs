@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use eth2_utility::{
+use utility::{
     consensus::Network,
     types::{ExecutionHeaderInfo, InitInput},
 };

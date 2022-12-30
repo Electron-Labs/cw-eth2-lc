@@ -275,6 +275,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-eth2-lc"
+version = "0.1.0"
+dependencies = [
+ "bitvec 1.0.1",
+ "bls",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus",
+ "cw2",
+ "ethereum-types",
+ "merkle_proof",
+ "schemars",
+ "serde",
+ "thiserror",
+ "tree_hash",
+ "types",
+ "utility",
+]
+
+[[package]]
 name = "cw-multi-test"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -478,66 +500,6 @@ dependencies = [
  "sec1",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "eth-types"
-version = "0.1.0"
-dependencies = [
- "cosmwasm-schema",
- "derive_more",
- "eth2_serde_utils",
- "eth2_ssz",
- "eth2_ssz_derive",
- "ethereum-types",
- "hex",
- "rlp",
- "rlp-derive",
- "schemars",
- "serde",
- "serde-big-array",
- "sha2 0.10.6",
- "sha3",
- "tree_hash",
- "tree_hash_derive",
-]
-
-[[package]]
-name = "eth2-client"
-version = "0.1.0"
-dependencies = [
- "bitvec 1.0.1",
- "bls",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-multi-test",
- "cw-storage-plus",
- "cw2",
- "eth-types",
- "eth2-utility",
- "ethereum-types",
- "merkle_proof",
- "schemars",
- "serde",
- "thiserror",
- "tree_hash",
-]
-
-[[package]]
-name = "eth2-utility"
-version = "0.1.0"
-dependencies = [
- "bitvec 1.0.1",
- "cosmwasm-schema",
- "cosmwasm-std",
- "eth-types",
- "ethereum-types",
- "hex",
- "lazy_static",
- "merkle_proof",
- "serde_json",
- "tree_hash",
 ]
 
 [[package]]
@@ -1318,6 +1280,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 
 [[package]]
+name = "types"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "derive_more",
+ "eth2_serde_utils",
+ "eth2_ssz",
+ "eth2_ssz_derive",
+ "ethereum-types",
+ "hex",
+ "rlp",
+ "rlp-derive",
+ "schemars",
+ "serde",
+ "serde-big-array",
+ "sha2 0.10.6",
+ "sha3",
+ "tree_hash",
+ "tree_hash_derive",
+]
+
+[[package]]
 name = "uint"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1352,6 +1336,22 @@ name = "unicode-xid"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
+
+[[package]]
+name = "utility"
+version = "0.1.0"
+dependencies = [
+ "bitvec 1.0.1",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "ethereum-types",
+ "hex",
+ "lazy_static",
+ "merkle_proof",
+ "serde_json",
+ "tree_hash",
+ "types",
+]
 
 [[package]]
 name = "version_check"

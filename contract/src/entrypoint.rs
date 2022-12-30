@@ -23,6 +23,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO remove unwraps
 // TODO implement prover contract
+// TODO add docs
 
 // TODO add gas to test
 // TODO make test e2e

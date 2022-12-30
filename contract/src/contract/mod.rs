@@ -8,7 +8,6 @@ use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use cosmwasm_std::{Addr, Env, MessageInfo};
 
-use tree_hash::TreeHash;
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
     compute_sync_committee_period, convert_branch, validate_beacon_block_header_update,

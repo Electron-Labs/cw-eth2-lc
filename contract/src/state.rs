@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use utility::{consensus::Network, types::ExecutionHeaderInfo};
 
 use cosmwasm_std::Addr;
+use serde::{Deserialize, Serialize};
 use types::{
     eth2::{ExtendedBeaconBlockHeader, SyncCommittee},
     H256,
@@ -10,7 +11,7 @@ use types::{
 
 pub const STATE: Item<ContractState> = Item::new("state");
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ContractState {
     /// If set, only light client updates by the trusted signer will be accepted
     pub trusted_signer: Option<Addr>,

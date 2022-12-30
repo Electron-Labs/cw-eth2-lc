@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "cw-eth2-lc",
+    "contract",
     "utility",
     "types",
 ]

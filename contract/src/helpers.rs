@@ -1,4 +1,3 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{to_binary, Addr, Binary, CosmosMsg, StdResult, WasmMsg};
@@ -7,7 +6,7 @@ use crate::msg::ExecuteMsg;
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct CwTemplateContract(pub Addr);
 
 impl CwTemplateContract {

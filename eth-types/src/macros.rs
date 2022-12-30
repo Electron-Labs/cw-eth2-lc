@@ -135,8 +135,7 @@ macro_rules! vec_wrapper_impl_tree_hash {
 #[macro_export]
 macro_rules! arr_ethereum_types_wrapper_impl_borsh_serde_ssz {
     ($name: ident, $len: expr) => {
-        #[derive(Default, Clone, Copy, Eq, PartialEq, Debug, Display, From, Into)]
-        #[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+        #[derive(Default, Clone, Copy, Eq, PartialEq, Debug, Display, From, Into, Serialize, Deserialize)]
         pub struct $name(pub ethereum_types::$name);
 
         impl From<&[u8; $len]> for $name {

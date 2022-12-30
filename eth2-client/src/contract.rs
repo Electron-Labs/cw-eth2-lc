@@ -19,7 +19,6 @@ use crate::{
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO remove borsh crate?
 // TODO remove unwraps
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call
 // TODO rename crates - directory structure

@@ -554,7 +554,6 @@ version = "0.1.0"
 dependencies = [
  "bitvec 1.0.1",
  "bls",
- "borsh",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -576,7 +575,6 @@ name = "eth2-utility"
 version = "0.1.0"
 dependencies = [
  "bitvec 1.0.1",
- "borsh",
  "cosmwasm-schema",
  "cosmwasm-std",
  "eth-types",

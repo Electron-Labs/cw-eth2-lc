@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
-use borsh::{BorshSerialize};
 use cosmwasm_std::{Addr, Env, MessageInfo};
 use eth2_utility::consensus::*;
 use eth2_utility::types::*;
@@ -43,8 +42,8 @@ pub struct Eth2ClientState {
     finalized_execution_blocks: HashMap<u64, H256>,
     /// All unfinalized execution blocks' headers hashes mapped to their `HeaderInfo`.
     /// Execution block hash -> ExecutionHeaderInfo object
-    unfinalized_headers: HashMap<Vec<u8>, ExecutionHeaderInfo>,
-    /// `AccountId`s mapped to their number of submitted headers.
+    unfinalized_headers: HashMap<String, ExecutionHeaderInfo>,
+    /// `Addr`s mapped to their number of submitted headers.
     /// Submitter account -> Num of submitted headers
     submitters: HashMap<Addr, u32>,
     /// Max number of unfinalized blocks allowed to be stored by one submitter account
@@ -129,7 +128,7 @@ impl Eth2Client {
     pub fn is_known_execution_header(&self, hash: H256) -> bool {
         self.state
             .unfinalized_headers
-            .get(&hash.try_to_vec().unwrap())
+            .get(&hash.to_string())
             .is_some()
     }
 
@@ -158,31 +157,31 @@ impl Eth2Client {
     }
 
     pub fn register_submitter(&mut self) {
-        let account_id = self.ctx.info.clone().unwrap().sender;
+        let addr = self.ctx.info.clone().unwrap().sender;
         assert!(
-            !self.state.submitters.contains_key(&account_id),
+            !self.state.submitters.contains_key(&addr),
             "The account is already registered"
         );
 
-        self.state.submitters.insert(account_id, 0);
+        self.state.submitters.insert(addr, 0);
     }
 
     pub fn unregister_submitter(&mut self) {
-        let account_id = self.ctx.info.clone().unwrap().sender;
-        if self.state.submitters.remove(&account_id).is_none() {
+        let addr = self.ctx.info.clone().unwrap().sender;
+        if self.state.submitters.remove(&addr).is_none() {
             panic!("{}", "The account is not registered");
         }
     }
 
-    pub fn is_submitter_registered(&self, account_id: Addr) -> bool {
-        self.state.submitters.contains_key(&account_id)
+    pub fn is_submitter_registered(&self, addr: Addr) -> bool {
+        self.state.submitters.contains_key(&addr)
     }
 
-    pub fn get_num_of_submitted_blocks_by_account(&self, account_id: Addr) -> u32 {
+    pub fn get_num_of_submitted_blocks_by_account(&self, addr: Addr) -> u32 {
         *self
             .state
             .submitters
-            .get(&account_id)
+            .get(&addr)
             .unwrap_or_else(|| panic!("{}", "The account is not registered"))
     }
 
@@ -204,7 +203,7 @@ impl Eth2Client {
         if self.state.finalized_beacon_header.execution_block_hash != block_header.parent_hash {
             self.state
                 .unfinalized_headers
-                .get(&block_header.parent_hash.try_to_vec().unwrap())
+                .get(&block_header.parent_hash.to_string())
                 .unwrap_or_else(|| {
                     panic!(
                         "{}",
@@ -237,7 +236,7 @@ impl Eth2Client {
         let insert_result = self
             .state
             .unfinalized_headers
-            .insert(block_hash.try_to_vec().unwrap(), block_info);
+            .insert(block_hash.to_string(), block_info);
         assert!(
             insert_result.is_none(),
             "{}",
@@ -432,7 +431,7 @@ impl Eth2Client {
         let finalized_execution_header_info = self
             .state
             .unfinalized_headers
-            .get(&finalized_header.execution_block_hash.try_to_vec().unwrap())
+            .get(&finalized_header.execution_block_hash.to_string())
             .unwrap_or_else(|| panic!("{}", "Unknown execution block hash"))
             .clone();
         #[cfg(feature = "logs")]
@@ -456,7 +455,7 @@ impl Eth2Client {
 
             self.state
                 .unfinalized_headers
-                .remove(&cursor_header_hash.try_to_vec().unwrap());
+                .remove(&cursor_header_hash.to_string());
             self.state
                 .finalized_execution_blocks
                 .insert(cursor_header.block_number, cursor_header_hash);
@@ -470,7 +469,7 @@ impl Eth2Client {
             cursor_header = self
                 .state
                 .unfinalized_headers
-                .get(&cursor_header.parent_hash.try_to_vec().unwrap())
+                .get(&cursor_header.parent_hash.to_string())
                 .unwrap_or_else(|| {
                     panic!(
                         "{}",

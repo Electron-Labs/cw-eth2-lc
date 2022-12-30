@@ -1,15 +1,16 @@
+use crate::helpers::TryToBinary;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::set_contract_version;
 
-use eth_types::{eth2::LightClientUpdate, BlockHeader};
+
+
 
 use crate::{
     error::ContractError,
-    msg::GenericQueryResponse,
     rainbow::{self, Context, Eth2Client},
 };
 use crate::{
@@ -127,34 +128,35 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
         state,
     };
     let res = match msg {
-        QueryMsg::IsInitialized {} => true.try_to_vec()?,
-        QueryMsg::LastBlockNumber {} => client.last_block_number().try_to_vec()?,
+        QueryMsg::IsInitialized => true.try_to_binary()?,
+        QueryMsg::LastBlockNumber => client.last_block_number().try_to_binary()?,
         QueryMsg::BlockHashSafe { block_number } => {
-            client.block_hash_safe(block_number).try_to_vec()?
+            client.block_hash_safe(block_number).try_to_binary()?
         }
         QueryMsg::IsKnownExecutionHeader { hash } => client
             .is_known_execution_header(eth_types::H256::try_from_slice(hash.as_slice())?)
-            .try_to_vec()?,
-        QueryMsg::FinalizedBeaconBlockRoot {} => {
-            client.finalized_beacon_block_root().try_to_vec()?
+            .try_to_binary()?,
+        QueryMsg::FinalizedBeaconBlockRoot => {
+            client.finalized_beacon_block_root().try_to_binary()?
         }
-        QueryMsg::FinalizedBeaconBlockSlot {} => {
-            client.finalized_beacon_block_slot().try_to_vec()?
+        QueryMsg::FinalizedBeaconBlockSlot => {
+            client.finalized_beacon_block_slot().try_to_binary()?
         }
-        QueryMsg::FinalizedBeaconBlockHeader {} => {
-            client.finalized_beacon_block_header().try_to_vec()?
+        QueryMsg::FinalizedBeaconBlockHeader => {
+            client.finalized_beacon_block_header().try_to_binary()?
         }
-        QueryMsg::GetLightClientState {} => client.get_light_client_state().try_to_vec()?,
+        QueryMsg::GetLightClientState => client.get_light_client_state().try_to_binary()?,
         QueryMsg::IsSubmitterRegistered { account_id } => client
             .is_submitter_registered(near_sdk::AccountId::new_unchecked(account_id))
-            .try_to_vec()?,
+            .try_to_binary()?,
         QueryMsg::GetNumOfSubmittedBlocksByAccount { account_id } => client
             .get_num_of_submitted_blocks_by_account(near_sdk::AccountId::new_unchecked(account_id))
-            .try_to_vec()?,
-        QueryMsg::GetMaxSubmittedBlocksByAccount {} => {
-            client.get_max_submitted_blocks_by_account().try_to_vec()?
-        }
-        QueryMsg::GetTrustedSigner {} => client.get_trusted_signer().try_to_vec()?,
+            .try_to_binary()?,
+        QueryMsg::GetMaxSubmittedBlocksByAccount => client
+            .get_max_submitted_blocks_by_account()
+            .try_to_binary()?,
+        QueryMsg::GetTrustedSigner => client.get_trusted_signer().try_to_binary()?,
     };
-    Ok(to_binary(&GenericQueryResponse { borsh: res })?)
+    
+    Ok(res)
 }

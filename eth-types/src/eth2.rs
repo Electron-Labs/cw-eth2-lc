@@ -216,7 +216,8 @@ impl JsonSchema for LightClientUpdate {
     }
 }
 
-#[derive(Clone, BorshDeserialize, BorshSerialize)]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct LightClientState {
     pub finalized_beacon_header: ExtendedBeaconBlockHeader,
     pub current_sync_committee: SyncCommittee,

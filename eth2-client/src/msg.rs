@@ -1,6 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use eth2_utility::types::InitInput;
-use eth_types::{eth2::LightClientUpdate, BlockHeader};
+use eth_types::{
+    eth2::{ExtendedBeaconBlockHeader, LightClientState, LightClientUpdate},
+    BlockHeader, H256,
+};
+use near_sdk::AccountId;
 
 #[cw_serde]
 pub struct InstantiateMsg(pub InitInput);
@@ -17,36 +21,28 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    // // GetCount returns the current count as a json-encoded number
-    // GetCount {},
-    #[returns(GenericQueryResponse)]
-    IsInitialized {},
-    #[returns(GenericQueryResponse)]
-    LastBlockNumber {},
-    #[returns(GenericQueryResponse)]
+    #[returns(bool)]
+    IsInitialized,
+    #[returns(u64)]
+    LastBlockNumber,
+    #[returns(Option<H256>)]
     BlockHashSafe { block_number: u64 },
-    #[returns(GenericQueryResponse)]
+    #[returns(bool)]
     IsKnownExecutionHeader { hash: Vec<u8> },
-    #[returns(GenericQueryResponse)]
-    FinalizedBeaconBlockRoot {},
-    #[returns(GenericQueryResponse)]
-    FinalizedBeaconBlockSlot {},
-    #[returns(GenericQueryResponse)]
-    FinalizedBeaconBlockHeader {},
-    #[returns(GenericQueryResponse)]
-    GetLightClientState {},
-    #[returns(GenericQueryResponse)]
+    #[returns(H256)]
+    FinalizedBeaconBlockRoot,
+    #[returns(u64)]
+    FinalizedBeaconBlockSlot,
+    #[returns(ExtendedBeaconBlockHeader)]
+    FinalizedBeaconBlockHeader,
+    #[returns(LightClientState)]
+    GetLightClientState,
+    #[returns(bool)]
     IsSubmitterRegistered { account_id: String },
-    #[returns(GenericQueryResponse)]
+    #[returns(u32)]
     GetNumOfSubmittedBlocksByAccount { account_id: String },
-    #[returns(GenericQueryResponse)]
-    GetMaxSubmittedBlocksByAccount {},
-    #[returns(GenericQueryResponse)]
-    GetTrustedSigner {},
-}
-
-// We define a custom struct for each query response
-#[cw_serde]
-pub struct GenericQueryResponse {
-    pub borsh: Vec<u8>,
+    #[returns(u32)]
+    GetMaxSubmittedBlocksByAccount,
+    #[returns(Option<AccountId>)]
+    GetTrustedSigner,
 }

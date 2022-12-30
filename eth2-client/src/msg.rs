@@ -1,10 +1,10 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
 use eth2_utility::types::InitInput;
 use eth_types::{
     eth2::{ExtendedBeaconBlockHeader, LightClientState, LightClientUpdate},
     BlockHeader, H256,
 };
-use near_sdk::AccountId;
 
 #[cw_serde]
 pub struct InstantiateMsg(pub InitInput);
@@ -15,7 +15,7 @@ pub enum ExecuteMsg {
     UnRegisterSubmitter,
     SubmitBeaconChainLightClientUpdate(LightClientUpdate),
     SubmitExecutionHeader(BlockHeader),
-    UpdateTrustedSigner { trusted_signer: Option<String> },
+    UpdateTrustedSigner { trusted_signer: Option<Addr> },
 }
 
 #[cw_serde]
@@ -28,7 +28,7 @@ pub enum QueryMsg {
     #[returns(Option<H256>)]
     BlockHashSafe { block_number: u64 },
     #[returns(bool)]
-    IsKnownExecutionHeader { hash: Vec<u8> },
+    IsKnownExecutionHeader { hash: H256 },
     #[returns(H256)]
     FinalizedBeaconBlockRoot,
     #[returns(u64)]
@@ -38,11 +38,11 @@ pub enum QueryMsg {
     #[returns(LightClientState)]
     GetLightClientState,
     #[returns(bool)]
-    IsSubmitterRegistered { account_id: String },
+    IsSubmitterRegistered { addr: Addr },
     #[returns(u32)]
-    GetNumOfSubmittedBlocksByAccount { account_id: String },
+    GetNumOfSubmittedBlocksByAccount { addr: Addr },
     #[returns(u32)]
     GetMaxSubmittedBlocksByAccount,
-    #[returns(Option<AccountId>)]
+    #[returns(Option<Addr>)]
     GetTrustedSigner,
 }

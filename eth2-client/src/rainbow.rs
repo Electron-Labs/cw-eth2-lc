@@ -3,14 +3,12 @@ use std::str::FromStr;
 
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
-use borsh::{BorshDeserialize, BorshSerialize};
-use cosmwasm_std::{Env, MessageInfo};
+use borsh::{BorshSerialize};
+use cosmwasm_std::{Addr, Env, MessageInfo};
 use eth2_utility::consensus::*;
 use eth2_utility::types::*;
 use eth_types::eth2::*;
 use eth_types::{BlockHeader, H256};
-
-use near_sdk::AccountId;
 
 use tree_hash::TreeHash;
 
@@ -24,10 +22,10 @@ pub struct Context {
     pub info: Option<MessageInfo>,
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Eth2ClientState {
     /// If set, only light client updates by the trusted signer will be accepted
-    trusted_signer: Option<AccountId>,
+    trusted_signer: Option<Addr>,
     /// Whether the client validates the updates.
     /// Should only be set to `false` for debugging, testing, and diagnostic purposes
     validate_updates: bool,
@@ -48,7 +46,7 @@ pub struct Eth2ClientState {
     unfinalized_headers: HashMap<Vec<u8>, ExecutionHeaderInfo>,
     /// `AccountId`s mapped to their number of submitted headers.
     /// Submitter account -> Num of submitted headers
-    submitters: HashMap<AccountId, u32>,
+    submitters: HashMap<Addr, u32>,
     /// Max number of unfinalized blocks allowed to be stored by one submitter account
     /// This value should be at least 32 blocks (1 epoch), but the recommended value is 1024 (32 epochs)
     max_submitted_blocks_by_account: u32,
@@ -87,7 +85,7 @@ impl Eth2Client {
         let finalized_execution_header_info = ExecutionHeaderInfo {
             parent_hash: args.finalized_execution_header.parent_hash,
             block_number: args.finalized_execution_header.number,
-            submitter: AccountId::new_unchecked(ctx.info.clone().unwrap().sender.to_string()),
+            submitter: ctx.info.clone().unwrap().sender,
         };
 
         Self {
@@ -160,8 +158,7 @@ impl Eth2Client {
     }
 
     pub fn register_submitter(&mut self) {
-        let account_id =
-            AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
+        let account_id = self.ctx.info.clone().unwrap().sender;
         assert!(
             !self.state.submitters.contains_key(&account_id),
             "The account is already registered"
@@ -171,18 +168,17 @@ impl Eth2Client {
     }
 
     pub fn unregister_submitter(&mut self) {
-        let account_id =
-            AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
+        let account_id = self.ctx.info.clone().unwrap().sender;
         if self.state.submitters.remove(&account_id).is_none() {
             panic!("{}", "The account is not registered");
         }
     }
 
-    pub fn is_submitter_registered(&self, account_id: AccountId) -> bool {
+    pub fn is_submitter_registered(&self, account_id: Addr) -> bool {
         self.state.submitters.contains_key(&account_id)
     }
 
-    pub fn get_num_of_submitted_blocks_by_account(&self, account_id: AccountId) -> u32 {
+    pub fn get_num_of_submitted_blocks_by_account(&self, account_id: Addr) -> u32 {
         *self
             .state
             .submitters
@@ -221,7 +217,7 @@ impl Eth2Client {
                 });
         }
 
-        let submitter = AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string());
+        let submitter = self.ctx.info.clone().unwrap().sender;
         self.update_submitter(&submitter, 1);
         let block_hash = block_header.calculate_hash();
         #[cfg(feature = "logs")]
@@ -249,12 +245,12 @@ impl Eth2Client {
         );
     }
 
-    pub fn update_trusted_signer(&mut self, trusted_signer: Option<AccountId>) {
+    pub fn update_trusted_signer(&mut self, trusted_signer: Option<Addr>) {
         assert!(self.ctx.info.clone().unwrap().sender == self.ctx.env.contract.address);
         self.state.trusted_signer = trusted_signer;
     }
 
-    pub fn get_trusted_signer(&self) -> Option<AccountId> {
+    pub fn get_trusted_signer(&self) -> Option<Addr> {
         self.state.trusted_signer.clone()
     }
 }
@@ -451,7 +447,7 @@ impl Eth2Client {
         let mut cursor_header = finalized_execution_header_info.clone();
         let mut cursor_header_hash = finalized_header.execution_block_hash;
 
-        let mut submitters_update: HashMap<AccountId, u32> = HashMap::new();
+        let mut submitters_update: HashMap<Addr, u32> = HashMap::new();
         loop {
             let num_of_removed_headers = *submitters_update
                 .get(&cursor_header.submitter)
@@ -548,7 +544,7 @@ impl Eth2Client {
         }
     }
 
-    fn update_submitter(&mut self, submitter: &AccountId, value: i64) {
+    fn update_submitter(&mut self, submitter: &Addr, value: i64) {
         let mut num_of_submitted_headers: i64 =
             *self.state.submitters.get(submitter).unwrap_or_else(|| {
                 panic!(
@@ -573,8 +569,7 @@ impl Eth2Client {
     fn is_light_client_update_allowed(&self) {
         if let Some(trusted_signer) = &self.state.trusted_signer {
             assert!(
-                &AccountId::new_unchecked(self.ctx.info.clone().unwrap().sender.to_string())
-                    == trusted_signer,
+                self.ctx.info.clone().unwrap().sender == *trusted_signer,
                 "Eth-client is deployed as trust mode, only trusted_signer can update the client"
             );
         }

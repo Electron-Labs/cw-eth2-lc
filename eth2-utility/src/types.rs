@@ -1,19 +1,18 @@
-use borsh::{BorshDeserialize, BorshSerialize};
+
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Addr;
 use eth_types::eth2::*;
 use eth_types::H256;
-use near_sdk::AccountId;
 
 /// Minimal information about a header.
-#[derive(Clone, BorshDeserialize, BorshSerialize)]
+#[cw_serde]
 pub struct ExecutionHeaderInfo {
     pub parent_hash: H256,
     pub block_number: u64,
-    pub submitter: AccountId,
+    pub submitter: Addr,
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct InitInput {
     pub network: String,
     pub finalized_execution_header: eth_types::BlockHeader,
@@ -24,5 +23,5 @@ pub struct InitInput {
     pub verify_bls_signatures: bool,
     pub hashes_gc_threshold: u64,
     pub max_submitted_blocks_by_account: u32,
-    pub trusted_signer: Option<AccountId>,
+    pub trusted_signer: Option<Addr>,
 }

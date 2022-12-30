@@ -1,13 +1,8 @@
 use crate::helpers::TryToBinary;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-};
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 use cw2::set_contract_version;
-
-
-
 
 use crate::{
     error::ContractError,
@@ -17,16 +12,12 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::STATE,
 };
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
+
+
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-// TODO remove accountId
-// TODO remove all borsh from contract interface
-// TODO remove near from crate
 
 // TODO remove borsh crate?
 // TODO remove unwraps
@@ -54,9 +45,7 @@ pub fn instantiate(
     );
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    deps.storage
-        .set(STATE, client.state.try_to_vec()?.as_slice());
+    STATE.save(deps.storage, &client.state)?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -70,15 +59,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let state = rainbow::Eth2ClientState::try_from_slice(
-        deps.storage
-            .get(STATE)
-            .ok_or(ContractError::Std(StdError::generic_err(
-                "could not find state",
-            )))?
-            .as_slice(),
-    )?;
-
+    let state = STATE.load(deps.storage)?;
     let mut client = Eth2Client {
         ctx: Context {
             env,
@@ -97,12 +78,11 @@ pub fn execute(
             client.submit_execution_header(block_header)
         }
         ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
-            client.update_trusted_signer(trusted_signer.map(near_sdk::AccountId::new_unchecked))
+            client.update_trusted_signer(trusted_signer)
         }
     };
 
-    deps.storage
-        .set(STATE, client.state.try_to_vec()?.as_slice());
+    STATE.save(deps.storage, &client.state)?;
 
     Ok(Response::new().add_attribute("method", "execute"))
 }
@@ -114,15 +94,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
-    let state = rainbow::Eth2ClientState::try_from_slice(
-        deps.storage
-            .get(STATE)
-            .ok_or(ContractError::Std(StdError::generic_err(
-                "could not find state",
-            )))?
-            .as_slice(),
-    )?;
-
+    let state = STATE.load(deps.storage)?;
     let client = Eth2Client {
         ctx: Context { env, info: None },
         state,
@@ -133,9 +105,9 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
         QueryMsg::BlockHashSafe { block_number } => {
             client.block_hash_safe(block_number).try_to_binary()?
         }
-        QueryMsg::IsKnownExecutionHeader { hash } => client
-            .is_known_execution_header(eth_types::H256::try_from_slice(hash.as_slice())?)
-            .try_to_binary()?,
+        QueryMsg::IsKnownExecutionHeader { hash } => {
+            client.is_known_execution_header(hash).try_to_binary()?
+        }
         QueryMsg::FinalizedBeaconBlockRoot => {
             client.finalized_beacon_block_root().try_to_binary()?
         }
@@ -146,17 +118,17 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
             client.finalized_beacon_block_header().try_to_binary()?
         }
         QueryMsg::GetLightClientState => client.get_light_client_state().try_to_binary()?,
-        QueryMsg::IsSubmitterRegistered { account_id } => client
-            .is_submitter_registered(near_sdk::AccountId::new_unchecked(account_id))
-            .try_to_binary()?,
-        QueryMsg::GetNumOfSubmittedBlocksByAccount { account_id } => client
-            .get_num_of_submitted_blocks_by_account(near_sdk::AccountId::new_unchecked(account_id))
+        QueryMsg::IsSubmitterRegistered { addr } => {
+            client.is_submitter_registered(addr).try_to_binary()?
+        }
+        QueryMsg::GetNumOfSubmittedBlocksByAccount { addr } => client
+            .get_num_of_submitted_blocks_by_account(addr)
             .try_to_binary()?,
         QueryMsg::GetMaxSubmittedBlocksByAccount => client
             .get_max_submitted_blocks_by_account()
             .try_to_binary()?,
         QueryMsg::GetTrustedSigner => client.get_trusted_signer().try_to_binary()?,
     };
-    
+
     Ok(res)
 }

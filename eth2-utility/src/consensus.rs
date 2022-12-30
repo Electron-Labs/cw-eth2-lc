@@ -3,6 +3,7 @@ use std::str::FromStr;
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use borsh::{BorshDeserialize, BorshSerialize};
+use cosmwasm_schema::cw_serde;
 use eth_types::eth2::*;
 use eth_types::H256;
 
@@ -28,7 +29,8 @@ pub const L2_EXECUTION_PAYLOAD_PROOF_SIZE: usize = 4;
 pub const EXECUTION_PROOF_SIZE: usize =
     L1_BEACON_BLOCK_BODY_PROOF_SIZE + L2_EXECUTION_PAYLOAD_PROOF_SIZE;
 
-#[derive(PartialEq, BorshSerialize, BorshDeserialize)]
+#[cw_serde]
+#[derive(BorshSerialize, BorshDeserialize)]
 pub enum Network {
     Mainnet,
     Kiln,

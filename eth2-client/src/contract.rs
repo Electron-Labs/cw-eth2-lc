@@ -35,6 +35,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO try types from substrate implementation - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO add logs
 // TODO prevent reinstantiation attacks
+// TODO remove custom jsonschema implements or make the typesafe so they dont break when types are changed - make macro?
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -86,14 +87,13 @@ pub fn execute(
     };
 
     match msg {
-        ExecuteMsg::RegisterSubmitter {} => client.register_submitter(),
-        ExecuteMsg::UnRegisterSubmitter {} => client.unregister_submitter(),
-        ExecuteMsg::SubmitBeaconChainLightClientUpdate { borsh } => client
-            .submit_beacon_chain_light_client_update(LightClientUpdate::try_from_slice(
-                borsh.as_slice(),
-            )?),
-        ExecuteMsg::SubmitExecutionHeader { borsh } => {
-            client.submit_execution_header(BlockHeader::try_from_slice(borsh.as_slice())?)
+        ExecuteMsg::RegisterSubmitter => client.register_submitter(),
+        ExecuteMsg::UnRegisterSubmitter => client.unregister_submitter(),
+        ExecuteMsg::SubmitBeaconChainLightClientUpdate(light_client_update) => {
+            client.submit_beacon_chain_light_client_update(light_client_update)
+        }
+        ExecuteMsg::SubmitExecutionHeader(block_header) => {
+            client.submit_execution_header(block_header)
         }
         ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
             client.update_trusted_signer(trusted_signer.map(near_sdk::AccountId::new_unchecked))

@@ -1,15 +1,16 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use eth2_utility::types::InitInput;
+use eth_types::{eth2::LightClientUpdate, BlockHeader};
 
 #[cw_serde]
 pub struct InstantiateMsg(pub InitInput);
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    RegisterSubmitter {},
-    UnRegisterSubmitter {},
-    SubmitBeaconChainLightClientUpdate { borsh: Vec<u8> },
-    SubmitExecutionHeader { borsh: Vec<u8> },
+    RegisterSubmitter,
+    UnRegisterSubmitter,
+    SubmitBeaconChainLightClientUpdate(LightClientUpdate),
+    SubmitExecutionHeader(BlockHeader),
     UpdateTrustedSigner { trusted_signer: Option<String> },
 }
 

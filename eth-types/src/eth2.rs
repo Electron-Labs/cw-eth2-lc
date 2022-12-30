@@ -133,47 +133,87 @@ pub struct SyncCommittee {
     pub aggregate_pubkey: PublicKeyBytes,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncAggregate {
     pub sync_committee_bits: SyncCommitteeBits,
     pub sync_committee_signature: SignatureBytes,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncCommitteeUpdate {
     pub next_sync_committee: SyncCommittee,
     pub next_sync_committee_branch: Vec<H256>,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct HeaderUpdate {
     pub beacon_header: BeaconBlockHeader,
     pub execution_block_hash: H256,
     pub execution_hash_branch: Vec<H256>,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct FinalizedHeaderUpdate {
     pub header_update: HeaderUpdate,
     pub finality_branch: Vec<H256>,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, Serialize, Deserialize, PartialEq)]
 pub struct LightClientUpdate {
     pub attested_beacon_header: BeaconBlockHeader,
     pub sync_aggregate: SyncAggregate,
-    #[cfg_attr(
-        not(target_arch = "wasm32"),
-        serde(with = "eth2_serde_utils::quoted_u64")
-    )]
+    #[serde(with = "eth2_serde_utils::quoted_u64")]
     pub signature_slot: Slot,
     pub finality_update: FinalizedHeaderUpdate,
     pub sync_committee_update: Option<SyncCommitteeUpdate>,
+}
+
+impl JsonSchema for LightClientUpdate {
+    fn schema_name() -> String {
+        "lightClientUpdate".to_string()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        let mut schema = SchemaObject {
+            instance_type: Some(InstanceType::Object.into()),
+            ..Default::default()
+        };
+        let obj = schema.object();
+
+        obj.required.insert("attestedBeaconHeader".to_owned());
+        obj.properties.insert(
+            "attestedBeaconHeader".to_owned(),
+            <BeaconBlockHeader>::json_schema(gen),
+        );
+
+        obj.required.insert("syncAggregate".to_owned());
+        obj.properties.insert(
+            "syncAggregate".to_owned(),
+            <SyncAggregate>::json_schema(gen),
+        );
+
+        obj.required.insert("signatureSlot".to_owned());
+        obj.properties
+            .insert("signatureSlot".to_owned(), <String>::json_schema(gen));
+
+        obj.required.insert("finalityUpdate".to_owned());
+        obj.properties.insert(
+            "finalityUpdate".to_owned(),
+            <FinalizedHeaderUpdate>::json_schema(gen),
+        );
+
+        obj.required.insert("syncCommitteeUpdate".to_owned());
+        obj.properties.insert(
+            "syncCommitteeUpdate".to_owned(),
+            <Option<SyncCommitteeUpdate>>::json_schema(gen),
+        );
+
+        schema.into()
+    }
 }
 
 #[derive(Clone, BorshDeserialize, BorshSerialize)]

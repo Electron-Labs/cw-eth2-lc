@@ -1,4 +1,3 @@
-use borsh::{BorshDeserialize, BorshSerialize};
 use derive_more::{
     Add, AddAssign, Display, Div, DivAssign, From, Into, Mul, MulAssign, Rem, RemAssign, Sub,
     SubAssign,
@@ -12,10 +11,9 @@ use schemars::{
     schema::{InstanceType, SchemaObject},
     JsonSchema,
 };
-#[cfg(not(target_arch = "wasm32"))]
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
-use std::io::{Error, Write};
+
 #[cfg(feature = "eth2")]
 use tree_hash::{Hash256, TreeHash, TreeHashType};
 
@@ -80,27 +78,6 @@ macro_rules! uint_declare_wrapper_and_serde {
         )]
         pub struct $name(pub ethereum_types::$name);
 
-        impl BorshSerialize for $name {
-            #[inline]
-            fn serialize<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
-                for i in 0..$len {
-                    BorshSerialize::serialize(&(self.0).0[i], writer)?;
-                }
-                Ok(())
-            }
-        }
-
-        impl BorshDeserialize for $name {
-            #[inline]
-            fn deserialize(buf: &mut &[u8]) -> Result<Self, Error> {
-                let mut data = [0u64; $len];
-                for i in 0..$len {
-                    data[i] = borsh::de::BorshDeserialize::deserialize(buf)?;
-                }
-                Ok($name(ethereum_types::$name(data)))
-            }
-        }
-
         impl RlpEncodable for $name {
             fn rlp_append(&self, s: &mut RlpStream) {
                 <ethereum_types::$name>::rlp_append(&self.0, s);
@@ -136,7 +113,7 @@ pub type Signature = H520;
 
 // Block Header
 
-#[derive(Debug, Clone, BorshSerialize, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BlockHeader {
     pub parent_hash: H256,
     pub uncles_hash: H256,
@@ -252,7 +229,6 @@ impl JsonSchema for BlockHeader {
     }
 }
 
-#[derive(BorshDeserialize)]
 pub struct BlockHeaderLondon {
     pub parent_hash: H256,
     pub uncles_hash: H256,
@@ -301,7 +277,6 @@ impl From<BlockHeaderLondon> for BlockHeader {
     }
 }
 
-#[derive(BorshDeserialize)]
 pub struct BlockHeaderPreLondon {
     pub parent_hash: H256,
     pub uncles_hash: H256,
@@ -346,15 +321,6 @@ impl From<BlockHeaderPreLondon> for BlockHeader {
             hash: header.hash,
             partial_hash: header.partial_hash,
         }
-    }
-}
-
-impl BorshDeserialize for BlockHeader {
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        #[cfg(feature = "eip1559")]
-        return BlockHeaderLondon::deserialize(buf).map(Into::into);
-        #[cfg(not(feature = "eip1559"))]
-        return BlockHeaderPreLondon::deserialize(buf).map(Into::into);
     }
 }
 

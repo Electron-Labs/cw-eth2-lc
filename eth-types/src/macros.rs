@@ -22,30 +22,6 @@ macro_rules! arr_wrapper_impl_tree_hash_and_borsh {
             }
         }
 
-        impl BorshSerialize for $name {
-            #[inline]
-            fn serialize<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
-                writer.write_all(&self.0)?;
-                Ok(())
-            }
-        }
-
-        impl BorshDeserialize for $name {
-            #[inline]
-            fn deserialize(buf: &mut &[u8]) -> Result<Self, Error> {
-                if buf.len() < $len {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::InvalidInput,
-                        "Unexpected length of input",
-                    ));
-                }
-                let mut data = [0u8; $len];
-                data.copy_from_slice(&buf[..$len]);
-                *buf = &buf[$len..];
-                Ok($name(data.into()))
-            }
-        }
-
         impl From<&Vec<u8>> for $name {
             fn from(item: &Vec<u8>) -> Self {
                 let mut data = [0u8; $len];
@@ -169,30 +145,6 @@ macro_rules! arr_ethereum_types_wrapper_impl_borsh_serde_ssz {
         impl From<&[u8]> for $name {
             fn from(item: &[u8]) -> Self {
                 item.to_vec().into()
-            }
-        }
-
-        impl BorshSerialize for $name {
-            #[inline]
-            fn serialize<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
-                writer.write_all(&(self.0).0)?;
-                Ok(())
-            }
-        }
-
-        impl BorshDeserialize for $name {
-            #[inline]
-            fn deserialize(buf: &mut &[u8]) -> Result<Self, Error> {
-                if buf.len() < $len {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::InvalidInput,
-                        "Unexpected length of input",
-                    ));
-                }
-                let mut data = [0u8; $len];
-                data.copy_from_slice(&buf[..$len]);
-                *buf = &buf[$len..];
-                Ok($name(data.into()))
             }
         }
 

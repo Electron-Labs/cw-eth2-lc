@@ -1,14 +1,11 @@
 use super::*;
-use borsh::{BorshDeserialize, BorshSerialize};
 use cosmwasm_schema::cw_serde;
 use schemars::{
     schema::{InstanceType, Schema, SchemaObject},
     JsonSchema,
 };
-use std::io::{Error, Write};
 use tree_hash::MerkleHasher;
 
-#[cfg(not(target_arch = "wasm32"))]
 use {
     hex::FromHex,
     serde::{Deserialize, Deserializer, Serialize, Serializer},
@@ -37,8 +34,6 @@ arr_wrapper_impl_tree_hash_and_borsh!(SyncCommitteeBits, SYNC_COMMITTEE_BITS_SIZ
 #[derive(
     Debug,
     Clone,
-    BorshDeserialize,
-    BorshSerialize,
     tree_hash_derive::TreeHash,
     PartialEq,
     Serialize,
@@ -103,7 +98,6 @@ pub struct SigningData {
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct ExtendedBeaconBlockHeader {
     pub header: BeaconBlockHeader,
     pub beacon_block_root: H256,
@@ -122,33 +116,29 @@ impl From<HeaderUpdate> for ExtendedBeaconBlockHeader {
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncCommitteePublicKeys(pub Vec<PublicKeyBytes>);
 vec_wrapper_impl_tree_hash!(SyncCommitteePublicKeys);
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize, tree_hash_derive::TreeHash)]
+#[derive(tree_hash_derive::TreeHash)]
 pub struct SyncCommittee {
     pub pubkeys: SyncCommitteePublicKeys,
     pub aggregate_pubkey: PublicKeyBytes,
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncAggregate {
     pub sync_committee_bits: SyncCommitteeBits,
     pub sync_committee_signature: SignatureBytes,
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncCommitteeUpdate {
     pub next_sync_committee: SyncCommittee,
     pub next_sync_committee_branch: Vec<H256>,
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct HeaderUpdate {
     pub beacon_header: BeaconBlockHeader,
     pub execution_block_hash: H256,
@@ -156,13 +146,12 @@ pub struct HeaderUpdate {
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct FinalizedHeaderUpdate {
     pub header_update: HeaderUpdate,
     pub finality_branch: Vec<H256>,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LightClientUpdate {
     pub attested_beacon_header: BeaconBlockHeader,
     pub sync_aggregate: SyncAggregate,
@@ -217,7 +206,6 @@ impl JsonSchema for LightClientUpdate {
 }
 
 #[cw_serde]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct LightClientState {
     pub finalized_beacon_header: ExtendedBeaconBlockHeader,
     pub current_sync_committee: SyncCommittee,

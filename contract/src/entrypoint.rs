@@ -15,15 +15,23 @@ use crate::{
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// TODO optimize after reading cosmwasm docs and eth2 light client spec
 // TODO remove unwraps
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call
-// TODO remove uneeded deps
-// TODO try types from substrate implementation - https://github.com/webb-tools/pallet-eth2-light-client
+// TODO try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO add logs
 // TODO prevent reinstantiation attacks
 // TODO remove custom jsonschema implements or make the typesafe so they dont break when types are changed - make macro?
 // TODO add comprehensive errors
 // TODO REFACTOR
+// TODO optimize rustfmt.toml
+
+// TODO use standardized directory structure
+// TODO add cicd
+// TODO move todos to github issues
+// TODO improve with awesome-cosmwasm
+// TODO refer existing cosmwasm contracts
+// TODO improve with rust tooling
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

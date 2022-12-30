@@ -15,21 +15,23 @@ use crate::{
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO get tests to work
-// TODO add gas to test
-// TODO make test e2e
-// TODO do we want to pause contract?
 // TODO optimize after reading cosmwasm docs and eth2 light client spec
-// TODO remove unwraps
+// TODO do we want to pause contract?
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call
-// TODO try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO add logs
 // TODO prevent reinstantiation attacks
-// TODO remove custom jsonschema implements or make the typesafe so they dont break when types are changed - make macro?
+// TODO try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
+// TODO remove unwraps
+// TODO implement prover contract
+
+// TODO add gas to test
+// TODO make test e2e
+// TODO remove custom jsonschema implements or make them typesafe so they dont break when types are changed - make macro?
 // TODO add comprehensive errors
+// TODO add tests
+// TODO refactor tests
 // TODO REFACTOR
 // TODO optimize rustfmt.toml
-
 // TODO use standardized directory structure
 // TODO add cicd
 // TODO move todos to github issues

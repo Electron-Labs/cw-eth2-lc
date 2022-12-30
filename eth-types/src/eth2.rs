@@ -1,10 +1,11 @@
-use super::*;
 use cosmwasm_schema::cw_serde;
 use schemars::{
     schema::{InstanceType, Schema, SchemaObject},
     JsonSchema,
 };
-use tree_hash::MerkleHasher;
+use tree_hash::{MerkleHasher, TreeHash};
+
+use crate::{arr_wrapper_impl_tree_hash_and_borsh, vec_wrapper_impl_tree_hash, H256};
 
 use {
     hex::FromHex,
@@ -31,14 +32,7 @@ arr_wrapper_impl_tree_hash_and_borsh!(PublicKeyBytes, PUBLIC_KEY_BYTES_LEN);
 arr_wrapper_impl_tree_hash_and_borsh!(SignatureBytes, SIGNATURE_BYTES_LEN);
 arr_wrapper_impl_tree_hash_and_borsh!(SyncCommitteeBits, SYNC_COMMITTEE_BITS_SIZE_IN_BYTES);
 
-#[derive(
-    Debug,
-    Clone,
-    tree_hash_derive::TreeHash,
-    PartialEq,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, Clone, tree_hash_derive::TreeHash, PartialEq, Serialize, Deserialize)]
 pub struct BeaconBlockHeader {
     #[serde(with = "eth2_serde_utils::quoted_u64")]
     pub slot: Slot,

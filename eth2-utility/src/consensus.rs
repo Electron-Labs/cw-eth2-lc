@@ -3,8 +3,12 @@ use std::str::FromStr;
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
 use cosmwasm_schema::cw_serde;
-use eth_types::eth2::*;
-use eth_types::H256;
+use eth_types::{
+    eth2::{
+        DomainType, Epoch, ForkData, ForkVersion, HeaderUpdate, PublicKeyBytes, SigningData, Slot,
+    },
+    H256,
+};
 
 use tree_hash::TreeHash;
 

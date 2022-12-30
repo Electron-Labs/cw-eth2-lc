@@ -54,7 +54,10 @@ macro_rules! arr_wrapper_impl_tree_hash_and_borsh {
         }
 
         impl Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+            fn serialize<S>(
+                &self,
+                serializer: S,
+            ) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
             where
                 S: Serializer,
             {
@@ -66,7 +69,7 @@ macro_rules! arr_wrapper_impl_tree_hash_and_borsh {
             fn schema_name() -> String {
                 String::schema_name()
             }
-        
+
             fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
                 String::json_schema(gen)
             }
@@ -111,7 +114,9 @@ macro_rules! vec_wrapper_impl_tree_hash {
 #[macro_export]
 macro_rules! arr_ethereum_types_wrapper_impl_borsh_serde_ssz {
     ($name: ident, $len: expr) => {
-        #[derive(Default, Clone, Copy, Eq, PartialEq, Debug, Display, From, Into, Serialize, Deserialize)]
+        #[derive(
+            Default, Clone, Copy, Eq, PartialEq, Debug, Display, From, Into, Serialize, Deserialize,
+        )]
         pub struct $name(pub ethereum_types::$name);
 
         impl From<&[u8; $len]> for $name {
@@ -205,7 +210,7 @@ macro_rules! arr_ethereum_types_wrapper_impl_borsh_serde_ssz {
             fn schema_name() -> String {
                 Vec::<u8>::schema_name()
             }
-        
+
             fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
                 Vec::<u8>::json_schema(gen)
             }

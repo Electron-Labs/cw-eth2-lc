@@ -1,8 +1,9 @@
-
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
-use eth_types::eth2::*;
-use eth_types::H256;
+use eth_types::{
+    eth2::{ExtendedBeaconBlockHeader, SyncCommittee},
+    BlockHeader, H256,
+};
 
 /// Minimal information about a header.
 #[cw_serde]
@@ -15,7 +16,7 @@ pub struct ExecutionHeaderInfo {
 #[cw_serde]
 pub struct InitInput {
     pub network: String,
-    pub finalized_execution_header: eth_types::BlockHeader,
+    pub finalized_execution_header: BlockHeader,
     pub finalized_beacon_header: ExtendedBeaconBlockHeader,
     pub current_sync_committee: SyncCommittee,
     pub next_sync_committee: SyncCommittee,

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_std::{Addr, Env, MessageInfo};
+use tree_hash::TreeHash;
 
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{

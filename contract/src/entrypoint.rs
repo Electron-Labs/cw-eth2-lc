@@ -15,6 +15,10 @@ use crate::{
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// TODO get tests to work
+// TODO add gas to test
+// TODO make test e2e
+// TODO do we want to pause contract?
 // TODO optimize after reading cosmwasm docs and eth2 light client spec
 // TODO remove unwraps
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call

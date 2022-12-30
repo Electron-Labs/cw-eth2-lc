@@ -62,7 +62,6 @@ macro_rules! arr_wrapper_impl_tree_hash_and_borsh {
             }
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
         impl<'de> Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
             where
@@ -78,13 +77,22 @@ macro_rules! arr_wrapper_impl_tree_hash_and_borsh {
             }
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
         impl Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
             where
                 S: Serializer,
             {
                 serializer.serialize_str(&format!("0x{}", hex::encode(self.0)))
+            }
+        }
+
+        impl JsonSchema for $name {
+            fn schema_name() -> String {
+                String::schema_name()
+            }
+        
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+                String::json_schema(gen)
             }
         }
     };
@@ -239,6 +247,16 @@ macro_rules! arr_ethereum_types_wrapper_impl_borsh_serde_ssz {
 
             fn ssz_append(&self, buf: &mut Vec<u8>) {
                 buf.extend_from_slice(self.0.as_bytes());
+            }
+        }
+
+        impl JsonSchema for $name {
+            fn schema_name() -> String {
+                Vec::<u8>::schema_name()
+            }
+        
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                Vec::<u8>::json_schema(gen)
             }
         }
     };

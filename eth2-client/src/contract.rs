@@ -4,7 +4,7 @@ use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::set_contract_version;
-use eth2_utility::types::InitInput;
+
 use eth_types::{eth2::LightClientUpdate, BlockHeader};
 
 use crate::{
@@ -27,6 +27,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO remove all borsh from contract interface
 // TODO remove near from crate
 
+// TODO remove borsh crate?
 // TODO remove unwraps
 // TODO use cosmwasm Maps, dont deserialize entire mapping for every call
 // TODO rename crates - directory structure
@@ -42,13 +43,12 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let args = InitInput::try_from_slice(msg.borsh.as_slice())?;
     let client = rainbow::Eth2Client::init(
         Context {
             env,
             info: Some(info.clone()),
         },
-        args,
+        msg.0,
     );
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;

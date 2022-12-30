@@ -23,6 +23,8 @@ eth2_serde_utils = { git = "https://github.com/aurora-is-near/lighthouse.git", r
 hex = "0.4.0"
 sha2 = "0.10.6"
 sha3 = "0.10.6"
+cosmwasm-schema = "1.1.3"
+schemars = "0.8.11"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 serde-big-array = "0.4.1"

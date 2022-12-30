@@ -1,4 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use cosmwasm_schema::cw_serde;
 use eth_types::eth2::*;
 use eth_types::H256;
 use near_sdk::AccountId;
@@ -11,7 +12,8 @@ pub struct ExecutionHeaderInfo {
     pub submitter: AccountId,
 }
 
-#[derive(Clone, BorshDeserialize, BorshSerialize)]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct InitInput {
     pub network: String,
     pub finalized_execution_header: eth_types::BlockHeader,

@@ -1,5 +1,10 @@
 use super::*;
 use borsh::{BorshDeserialize, BorshSerialize};
+use cosmwasm_schema::cw_serde;
+use schemars::{
+    schema::{InstanceType, Schema, SchemaObject},
+    JsonSchema,
+};
 use std::io::{Error, Write};
 use tree_hash::MerkleHasher;
 
@@ -18,33 +23,71 @@ pub type Epoch = u64;
 pub type ForkVersion = [u8; 4];
 pub type DomainType = [u8; 4];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PublicKeyBytes(pub [u8; PUBLIC_KEY_BYTES_LEN]);
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SignatureBytes(pub [u8; SIGNATURE_BYTES_LEN]);
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SyncCommitteeBits(pub [u8; SYNC_COMMITTEE_BITS_SIZE_IN_BYTES]);
 
 arr_wrapper_impl_tree_hash_and_borsh!(PublicKeyBytes, PUBLIC_KEY_BYTES_LEN);
 arr_wrapper_impl_tree_hash_and_borsh!(SignatureBytes, SIGNATURE_BYTES_LEN);
 arr_wrapper_impl_tree_hash_and_borsh!(SyncCommitteeBits, SYNC_COMMITTEE_BITS_SIZE_IN_BYTES);
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, tree_hash_derive::TreeHash)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[derive(
+    Debug,
+    Clone,
+    BorshDeserialize,
+    BorshSerialize,
+    tree_hash_derive::TreeHash,
+    PartialEq,
+    Serialize,
+    Deserialize,
+)]
 pub struct BeaconBlockHeader {
-    #[cfg_attr(
-        not(target_arch = "wasm32"),
-        serde(with = "eth2_serde_utils::quoted_u64")
-    )]
+    #[serde(with = "eth2_serde_utils::quoted_u64")]
     pub slot: Slot,
-    #[cfg_attr(
-        not(target_arch = "wasm32"),
-        serde(with = "eth2_serde_utils::quoted_u64")
-    )]
+    #[serde(with = "eth2_serde_utils::quoted_u64")]
     pub proposer_index: u64,
     pub parent_root: H256,
     pub state_root: H256,
     pub body_root: H256,
+}
+
+impl JsonSchema for BeaconBlockHeader {
+    fn schema_name() -> String {
+        "beaconBlockHeader".to_string()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> Schema {
+        let mut schema = SchemaObject {
+            instance_type: Some(InstanceType::Object.into()),
+            ..Default::default()
+        };
+        let obj = schema.object();
+
+        obj.required.insert("slot".to_owned());
+        obj.properties
+            .insert("slot".to_owned(), <String>::json_schema(gen));
+
+        obj.required.insert("proposerIndex".to_owned());
+        obj.properties
+            .insert("proposerIndex".to_owned(), <String>::json_schema(gen));
+
+        obj.required.insert("parentRoot".to_owned());
+        obj.properties
+            .insert("parentRoot".to_owned(), <H256>::json_schema(gen));
+
+        obj.required.insert("stateRoot".to_owned());
+        obj.properties
+            .insert("stateRoot".to_owned(), <H256>::json_schema(gen));
+
+        obj.required.insert("bodyRoot".to_owned());
+        obj.properties
+            .insert("bodyRoot".to_owned(), <H256>::json_schema(gen));
+
+        schema.into()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, tree_hash_derive::TreeHash)]
@@ -59,8 +102,8 @@ pub struct SigningData {
     pub domain: H256,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct ExtendedBeaconBlockHeader {
     pub header: BeaconBlockHeader,
     pub beacon_block_root: H256,
@@ -78,13 +121,13 @@ impl From<HeaderUpdate> for ExtendedBeaconBlockHeader {
     }
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct SyncCommitteePublicKeys(pub Vec<PublicKeyBytes>);
 vec_wrapper_impl_tree_hash!(SyncCommitteePublicKeys);
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, tree_hash_derive::TreeHash)]
-#[cfg_attr(not(target_arch = "wasm32"), derive(Serialize, Deserialize))]
+#[cw_serde]
+#[derive(BorshDeserialize, BorshSerialize, tree_hash_derive::TreeHash)]
 pub struct SyncCommittee {
     pub pubkeys: SyncCommitteePublicKeys,
     pub aggregate_pubkey: PublicKeyBytes,

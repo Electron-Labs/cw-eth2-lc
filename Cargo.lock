@@ -756,6 +756,7 @@ name = "eth-types"
 version = "0.1.0"
 dependencies = [
  "borsh",
+ "cosmwasm-schema",
  "derive_more",
  "eth2_serde_utils",
  "eth2_ssz",
@@ -765,6 +766,7 @@ dependencies = [
  "near-sdk",
  "rlp",
  "rlp-derive",
+ "schemars",
  "serde",
  "serde-big-array",
  "sha2 0.10.6",
@@ -803,6 +805,7 @@ version = "0.1.0"
 dependencies = [
  "bitvec 1.0.1",
  "borsh",
+ "cosmwasm-schema",
  "eth-types",
  "ethereum-types",
  "hex",

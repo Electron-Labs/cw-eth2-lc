@@ -4,8 +4,7 @@ pub mod query;
 
 use std::collections::HashMap;
 
-use bitvec::order::Lsb0;
-use bitvec::prelude::BitVec;
+use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_std::{Addr, Env, MessageInfo};
 
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};

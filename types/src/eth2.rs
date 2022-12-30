@@ -7,10 +7,8 @@ use tree_hash::{MerkleHasher, TreeHash};
 
 use crate::{arr_wrapper_impl_tree_hash_and_borsh, vec_wrapper_impl_tree_hash, H256};
 
-use {
-    hex::FromHex,
-    serde::{Deserialize, Deserializer, Serialize, Serializer},
-};
+use hex::FromHex;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub const PUBLIC_KEY_BYTES_LEN: usize = 48;
 pub const SIGNATURE_BYTES_LEN: usize = 96;

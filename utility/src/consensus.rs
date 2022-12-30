@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-use bitvec::order::Lsb0;
-use bitvec::prelude::BitVec;
+use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_schema::cw_serde;
 use types::{
     eth2::{

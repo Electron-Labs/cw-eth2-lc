@@ -1,6 +1,9 @@
 use bitvec::{bitarr, order::Lsb0};
 use cosmwasm_std::{Addr, Coin};
-use cw_eth2_lc::contract::{Contract, ContractContext};
+use cw_eth2_lc::{
+    contract::{Contract, ContractContext},
+    state::ContractState,
+};
 use hex::FromHex;
 use tree_hash::TreeHash;
 use types::{eth2::LightClientUpdate, BlockHeader, H256, U256};
@@ -22,7 +25,7 @@ pub fn get_test_context(
     init_options: Option<InitOptions>,
 ) -> TestContext<'static> {
     let (headers, updates, init_input) = get_test_data(init_options);
-    let contract = Contract::init(
+    let mut contract = Contract::new(
         ContractContext {
             env: cosmwasm_std::testing::mock_env(),
             info: Some(cosmwasm_std::testing::mock_info(
@@ -30,8 +33,9 @@ pub fn get_test_context(
                 funds.as_slice(),
             )),
         },
-        init_input,
+        ContractState::default(),
     );
+    contract.init(init_input);
     assert_eq!(contract.last_block_number(), headers[0].number);
 
     TestContext {
@@ -56,8 +60,7 @@ mod generic_tests {
 
     #[test]
     pub fn test_header_root() {
-        let header =
-            read_beacon_header(format!("./tests/data/kiln/beacon_header_{}.json", 5000));
+        let header = read_beacon_header(format!("./tests/data/kiln/beacon_header_{}.json", 5000));
         assert_eq!(
             H256(header.tree_hash_root()),
             Vec::from_hex("c613fbf1a8e95c2aa0f76a5d226ee1dc057cce18b235803f50e7a1bde050d290")

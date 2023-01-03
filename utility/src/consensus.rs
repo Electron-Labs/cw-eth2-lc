@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr};
 
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_schema::cw_serde;
@@ -32,7 +32,9 @@ pub const EXECUTION_PROOF_SIZE: usize =
     L1_BEACON_BLOCK_BODY_PROOF_SIZE + L2_EXECUTION_PAYLOAD_PROOF_SIZE;
 
 #[cw_serde]
+#[derive(std::default::Default)]
 pub enum Network {
+    #[default]
     Mainnet,
     Kiln,
     Ropsten,

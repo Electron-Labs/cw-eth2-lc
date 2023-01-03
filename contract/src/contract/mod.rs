@@ -28,6 +28,10 @@ pub struct ContractContext {
 }
 
 impl Contract {
+    pub fn new(ctx: ContractContext, state: ContractState) -> Self {
+        Self { ctx, state }
+    }
+    
     fn validate_light_client_update(&self, update: &LightClientUpdate) {
         #[cfg(feature = "logs")]
         env::log_str(format!("Validate update. Used gas: {}", env::used_gas().0).as_str());

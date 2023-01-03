@@ -16,6 +16,7 @@ pub enum ExecuteMsg {
     SubmitBeaconChainLightClientUpdate(LightClientUpdate),
     SubmitExecutionHeader(BlockHeader),
     UpdateTrustedSigner { trusted_signer: Option<Addr> },
+    Reset(Box<InitInput>),
 }
 
 #[cw_serde]

@@ -11,8 +11,10 @@ use types::{
 
 pub const STATE: Item<ContractState> = Item::new("state");
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct ContractState {
+    pub initialized: bool,
+
     /// If set, only light client updates by the trusted signer will be accepted
     pub trusted_signer: Option<Addr>,
     /// Whether the client validates the updates.

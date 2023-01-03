@@ -1,11 +1,11 @@
-use crate::helpers::TryToBinary;
+use crate::{helpers::TryToBinary, state::ContractState};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 use cw2::set_contract_version;
 
 use crate::{
-    contract::{self, Contract, ContractContext},
+    contract::{Contract, ContractContext},
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::STATE,
@@ -15,16 +15,17 @@ use crate::{
 const CONTRACT_NAME: &str = "crates.io:eth2-client";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// TODO optimize after reading cosmwasm docs and eth2 light client spec
-// TODO do we want to pause contract?
-// TODO use cosmwasm Maps, dont deserialize entire mapping for every call
-// TODO add logs
+// TODO test on testnet, try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
 // TODO prevent reinstantiation attacks
-// TODO try no std crates from this if things dont workout - https://github.com/webb-tools/pallet-eth2-light-client
+// TODO optimize after reading cosmwasm docs and eth2 light client spec
+// TODO use cosmwasm Maps, dont deserialize entire mapping for every call
+// TODO do we want to pause contract?
+// TODO add logs
 // TODO remove unwraps
 // TODO implement prover contract
-// TODO add docs
+// TODO conditionally compile reset endpoint
 
+// TODO add docs
 // TODO add gas to test
 // TODO make test e2e
 // TODO remove custom jsonschema implements or make them typesafe so they dont break when types are changed - make macro?
@@ -47,13 +48,15 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let contract = contract::Contract::init(
+    let mut contract = Contract::new(
         ContractContext {
             env,
             info: Some(info.clone()),
         },
-        msg.0,
+        ContractState::default(),
     );
+
+    contract.init(msg.0);
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &contract.state)?;
@@ -70,13 +73,13 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let mut contract = Contract {
-        ctx: ContractContext {
+    let mut contract = Contract::new(
+        ContractContext {
             env,
             info: Some(info),
         },
-        state: STATE.load(deps.storage)?,
-    };
+        STATE.load(deps.storage)?,
+    );
 
     match msg {
         ExecuteMsg::RegisterSubmitter => contract.register_submitter(),
@@ -90,6 +93,7 @@ pub fn execute(
         ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
             contract.update_trusted_signer(trusted_signer)
         }
+        ExecuteMsg::Reset(init_input) => contract.init(*init_input),
     };
 
     STATE.save(deps.storage, &contract.state)?;
@@ -104,10 +108,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
-    let contract = Contract {
-        ctx: ContractContext { env, info: None },
-        state: STATE.load(deps.storage)?,
-    };
+    let contract = Contract::new(
+        ContractContext { env, info: None },
+        STATE.load(deps.storage)?,
+    );
     let res = match msg {
         QueryMsg::IsInitialized => true.try_to_binary()?,
         QueryMsg::LastBlockNumber => contract.last_block_number().try_to_binary()?,

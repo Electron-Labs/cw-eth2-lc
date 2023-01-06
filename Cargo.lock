@@ -94,7 +94,7 @@ version = "0.2.0"
 source = "git+https://github.com/aurora-is-near/lighthouse.git?rev=b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec#b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec"
 dependencies = [
  "eth2_hashing",
- "eth2_serde_utils",
+ "eth2_serde_utils 0.1.1 (git+https://github.com/aurora-is-near/lighthouse.git?rev=b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec)",
  "eth2_ssz",
  "ethereum-types",
  "getrandom 0.2.8",
@@ -499,6 +499,17 @@ version = "0.3.0"
 dependencies = [
  "lazy_static",
  "sha2 0.10.6",
+]
+
+[[package]]
+name = "eth2_serde_utils"
+version = "0.1.1"
+dependencies = [
+ "ethereum-types",
+ "hex",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -1276,7 +1287,7 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "derive_more",
- "eth2_serde_utils",
+ "eth2_serde_utils 0.1.1",
  "eth2_ssz",
  "eth2_ssz_derive",
  "ethereum-types",

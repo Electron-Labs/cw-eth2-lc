@@ -3,6 +3,7 @@ members = [
     "contract",
     "utility",
     "types",
+    "serde_utils",
 ]
 
 [patch]

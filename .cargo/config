@@ -1,0 +1,3 @@
+[alias]
+wasm = "build --release --lib --target wasm32-unknown-unknown --package cw-eth2-lc"
+schema = "run --bin schema --package cw-eth2-lc"

@@ -40,6 +40,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO improve with awesome-cosmwasm
 // TODO refer existing cosmwasm contracts
 // TODO improve with rust tooling
+// TODO add cosmwasm check to CI
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

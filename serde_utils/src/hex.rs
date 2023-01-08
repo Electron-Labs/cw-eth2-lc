@@ -15,7 +15,7 @@ pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
 /// Decode `data` from a 0x-prefixed hex string.
 pub fn decode(s: &str) -> Result<Vec<u8>, String> {
     if let Some(stripped) = s.strip_prefix("0x") {
-        hex::decode(stripped).map_err(|e| format!("invalid hex: {:?}", e))
+        hex::decode(stripped).map_err(|e| format!("invalid hex: {e:?}"))
     } else {
         Err("hex must have 0x prefix".to_string())
     }
@@ -52,7 +52,7 @@ impl<'de> Visitor<'de> for HexVisitor {
         E: de::Error,
     {
         hex::decode(value.trim_start_matches("0x"))
-            .map_err(|e| de::Error::custom(format!("invalid hex ({:?})", e)))
+            .map_err(|e| de::Error::custom(format!("invalid hex ({e:?})")))
     }
 }
 
@@ -63,15 +63,15 @@ mod test {
     #[test]
     fn encoding() {
         let bytes = vec![0, 255];
-        let hex = encode(&bytes);
+        let hex = encode(bytes);
         assert_eq!(hex.as_str(), "0x00ff");
 
         let bytes = vec![];
-        let hex = encode(&bytes);
+        let hex = encode(bytes);
         assert_eq!(hex.as_str(), "0x");
 
         let bytes = vec![1, 2, 3];
-        let hex = encode(&bytes);
+        let hex = encode(bytes);
         assert_eq!(hex.as_str(), "0x010203");
     }
 }

@@ -41,6 +41,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO refer existing cosmwasm contracts
 // TODO improve with rust tooling
 // TODO add cosmwasm check to CI
+// TODO use docker for integration test instead of testnet
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

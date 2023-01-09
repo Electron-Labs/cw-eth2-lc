@@ -7,7 +7,9 @@ use types::{
 use utility::types::InitInput;
 
 #[cw_serde]
-pub struct InstantiateMsg(pub InitInput);
+pub struct InstantiateMsg {
+    pub args: InitInput,
+}
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -16,7 +18,6 @@ pub enum ExecuteMsg {
     SubmitBeaconChainLightClientUpdate(LightClientUpdate),
     SubmitExecutionHeader(BlockHeader),
     UpdateTrustedSigner { trusted_signer: Option<Addr> },
-    Reset(Box<InitInput>),
 }
 
 #[cw_serde]

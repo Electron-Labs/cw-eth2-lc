@@ -24,7 +24,10 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO remove unwraps
 // TODO implement prover contract
 // TODO conditionally compile reset endpoint
+// TODO quoted_int could cause errors deserialize_str test data
+// TODO remove all panics
 
+// TODO readme makes no sense
 // TODO add docs
 // TODO add gas to test
 // TODO make test e2e
@@ -42,6 +45,7 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO improve with rust tooling
 // TODO add cosmwasm check to CI
 // TODO use docker for integration test instead of testnet
+// TODO add specific error to tests
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -58,7 +62,7 @@ pub fn instantiate(
         ContractState::default(),
     );
 
-    contract.init(msg.0);
+    contract.init(msg.args);
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &contract.state)?;
@@ -95,7 +99,6 @@ pub fn execute(
         ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
             contract.update_trusted_signer(trusted_signer)
         }
-        ExecuteMsg::Reset(init_input) => contract.init(*init_input),
     };
 
     STATE.save(deps.storage, &contract.state)?;

@@ -1,4 +1,4 @@
-use std::{str::FromStr};
+use std::str::FromStr;
 
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_schema::cw_serde;

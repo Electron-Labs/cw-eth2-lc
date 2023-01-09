@@ -5,8 +5,7 @@
 //! Quotes can be optional during decoding.
 
 use crate::hex;
-use serde::ser::SerializeSeq;
-use serde::{de, Deserializer, Serializer};
+use serde::{de, ser::SerializeSeq, Deserializer, Serializer};
 
 pub struct ListOfBytesListVisitor;
 impl<'a> serde::de::Visitor<'a> for ListOfBytesListVisitor {

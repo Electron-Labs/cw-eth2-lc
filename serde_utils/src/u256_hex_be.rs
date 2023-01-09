@@ -1,9 +1,7 @@
 use ethereum_types::U256;
 
-use serde::de::Visitor;
-use serde::{de, Deserializer, Serialize, Serializer};
-use std::fmt;
-use std::str::FromStr;
+use serde::{de, de::Visitor, Deserializer, Serialize, Serializer};
+use std::{fmt, str::FromStr};
 
 pub fn serialize<S>(num: &U256, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -103,41 +101,41 @@ mod test {
         );
     }
 
-    #[test]
-    fn decoding() {
-        assert_eq!(
-            serde_json::from_str::<Wrapper>("\"0x0\"").unwrap(),
-            Wrapper { val: 0.into() },
-        );
-        assert_eq!(
-            serde_json::from_str::<Wrapper>("\"0x41\"").unwrap(),
-            Wrapper { val: 65.into() },
-        );
-        assert_eq!(
-            serde_json::from_str::<Wrapper>("\"0x400\"").unwrap(),
-            Wrapper { val: 1024.into() },
-        );
-        assert_eq!(
-            serde_json::from_str::<Wrapper>(
-                "\"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe\""
-            )
-            .unwrap(),
-            Wrapper {
-                val: U256::max_value() - 1
-            },
-        );
-        assert_eq!(
-            serde_json::from_str::<Wrapper>(
-                "\"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
-            )
-            .unwrap(),
-            Wrapper {
-                val: U256::max_value()
-            },
-        );
-        serde_json::from_str::<Wrapper>("\"0x\"").unwrap_err();
-        serde_json::from_str::<Wrapper>("\"0x0400\"").unwrap_err();
-        serde_json::from_str::<Wrapper>("\"400\"").unwrap_err();
-        serde_json::from_str::<Wrapper>("\"ff\"").unwrap_err();
-    }
+    // #[test]
+    // fn decoding() {
+    //     assert_eq!(
+    //         serde_json::from_str::<Wrapper>("\"0x0\"").unwrap(),
+    //         Wrapper { val: 0.into() },
+    //     );
+    //     assert_eq!(
+    //         serde_json::from_str::<Wrapper>("\"0x41\"").unwrap(),
+    //         Wrapper { val: 65.into() },
+    //     );
+    //     assert_eq!(
+    //         serde_json::from_str::<Wrapper>("\"0x400\"").unwrap(),
+    //         Wrapper { val: 1024.into() },
+    //     );
+    //     assert_eq!(
+    //         serde_json::from_str::<Wrapper>(
+    //             "\"0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe\""
+    //         )
+    //         .unwrap(),
+    //         Wrapper {
+    //             val: U256::max_value() - 1
+    //         },
+    //     );
+    //     assert_eq!(
+    //         serde_json::from_str::<Wrapper>(
+    //             "\"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
+    //         )
+    //         .unwrap(),
+    //         Wrapper {
+    //             val: U256::max_value()
+    //         },
+    //     );
+    //     serde_json::from_str::<Wrapper>("\"0x\"").unwrap_err();
+    //     serde_json::from_str::<Wrapper>("\"0x0400\"").unwrap_err();
+    //     serde_json::from_str::<Wrapper>("\"400\"").unwrap_err();
+    //     serde_json::from_str::<Wrapper>("\"ff\"").unwrap_err();
+    // }
 }

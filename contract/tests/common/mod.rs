@@ -2,6 +2,9 @@ use cosmwasm_std::Addr;
 use lazy_static::lazy_static;
 use types::{eth2::*, BlockHeader};
 use utility::types::InitInput;
+pub mod contract_interface;
+pub mod test_context;
+pub mod test_contract_client;
 
 pub fn read_beacon_header(filename: String) -> BeaconBlockHeader {
     serde_json::from_reader(std::fs::File::open(std::path::Path::new(&filename)).unwrap()).unwrap()
@@ -17,9 +20,7 @@ pub fn read_client_update(filename: String) -> LightClientUpdate {
 
 /// Returns a pre-defined account_id from a list of 6.
 pub fn accounts(id: usize) -> Addr {
-    Addr::unchecked(
-        ["alice", "bob", "charlie", "danny", "eugene", "fargo"][id].to_string(),
-    )
+    Addr::unchecked(["alice", "bob", "charlie", "danny", "eugene", "fargo"][id].to_string())
 }
 
 pub fn read_client_updates(

@@ -2,8 +2,10 @@
 //!
 //! E.g., `0` serializes as `"0x0000000000000000"`.
 
-use serde::de::{self, Error, Visitor};
-use serde::{Deserializer, Serializer};
+use serde::{
+    de::{self, Error, Visitor},
+    Deserializer, Serializer,
+};
 use std::fmt;
 
 const BYTES_LEN: usize = 8;
@@ -27,9 +29,7 @@ impl<'de> Visitor<'de> for QuantityVisitor {
         let stripped = value.trim_start_matches("0x");
 
         if stripped.is_empty() {
-            Err(de::Error::custom(format!(
-                "quantity cannot be {stripped}"
-            )))
+            Err(de::Error::custom(format!("quantity cannot be {stripped}")))
         } else if stripped == "0" {
             Ok(vec![0])
         } else if stripped.starts_with('0') {

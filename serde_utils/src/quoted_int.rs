@@ -7,8 +7,7 @@
 use ethereum_types::U256;
 use serde::{Deserializer, Serializer};
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::marker::PhantomData;
+use std::{convert::TryFrom, marker::PhantomData};
 
 macro_rules! define_mod {
     ($int: ty, $visit_fn: ident) => {

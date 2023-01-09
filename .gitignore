@@ -16,3 +16,6 @@
 # IDEs
 *.iml
 .idea
+
+# Other
+dep.txt

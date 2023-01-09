@@ -7,7 +7,7 @@ use utility::{
 
 use crate::state::ContractState;
 
-use super::{Contract};
+use super::Contract;
 
 impl Contract {
     pub fn init(&mut self, args: InitInput) {

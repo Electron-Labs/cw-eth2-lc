@@ -7,10 +7,10 @@ use utility::{
 
 use crate::state::ContractState;
 
-use super::Contract;
+use super::{Contract, ContractContext};
 
 impl Contract {
-    pub fn init(&mut self, args: InitInput) {
+    pub fn new_instantiated(ctx: ContractContext, args: InitInput) -> Self {
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
 
@@ -37,10 +37,10 @@ impl Contract {
         let finalized_execution_header_info = ExecutionHeaderInfo {
             parent_hash: args.finalized_execution_header.parent_hash,
             block_number: args.finalized_execution_header.number,
-            submitter: self.ctx.info.clone().unwrap().sender,
+            submitter: ctx.info.clone().unwrap().sender,
         };
 
-        self.state = ContractState {
+        let state = ContractState {
             trusted_signer: args.trusted_signer,
             validate_updates: args.validate_updates,
             verify_bls_signatures: args.verify_bls_signatures,
@@ -56,5 +56,7 @@ impl Contract {
             next_sync_committee: Some(args.next_sync_committee),
             initialized: true,
         };
+
+        Self { ctx, state }
     }
 }

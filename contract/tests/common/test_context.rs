@@ -1,7 +1,6 @@
 use cosmwasm_std::Addr;
 use cw_eth2_lc::{
     contract::{Contract, ContractContext},
-    state::ContractState,
     Result,
 };
 
@@ -23,7 +22,7 @@ pub fn get_test_context(
 ) -> TestContext<'static> {
     let (headers, updates, init_input) = get_test_data(init_options);
     let contract = if !true {
-        let mut contract = Contract::new(
+        let contract = Contract::new_instantiated(
             ContractContext {
                 env: cosmwasm_std::testing::mock_env(),
                 info: Some(cosmwasm_std::testing::mock_info(
@@ -31,9 +30,8 @@ pub fn get_test_context(
                     Vec::new().as_slice(),
                 )),
             },
-            ContractState::default(),
+            init_input,
         );
-        contract.init(init_input);
         Box::new(contract) as Box<dyn ContractInterface>
     } else {
         let contract = Box::new(IntegrationTestContractImplementation::new(init_input).unwrap())

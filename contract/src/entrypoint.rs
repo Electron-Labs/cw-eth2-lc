@@ -1,4 +1,4 @@
-use crate::{helpers::TryToBinary, state::ContractState};
+use crate::{helpers::TryToBinary};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
@@ -21,9 +21,10 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO add logs
 // TODO remove unwraps
 // TODO implement prover contract
-// TODO quoted_int could cause errors deserialize_str test data
+// TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove all panics
 
+// TODO remove uneeded features and deps
 // TODO readme makes no sense
 // TODO add docs
 // TODO add gas to test
@@ -50,16 +51,13 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let mut contract = Contract::new(
+    let contract = Contract::new_instantiated(
         ContractContext {
             env,
             info: Some(info.clone()),
         },
-        ContractState::default(),
+        msg.args,
     );
-
-    contract.init(msg.args);
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &contract.state)?;
 

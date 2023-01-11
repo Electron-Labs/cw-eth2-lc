@@ -28,7 +28,7 @@ arr_wrapper_impl_tree_hash_and_borsh!(SignatureBytes, SIGNATURE_BYTES_LEN);
 arr_wrapper_impl_tree_hash_and_borsh!(SyncCommitteeBits, SYNC_COMMITTEE_BITS_SIZE_IN_BYTES);
 
 #[cw_serde]
-#[derive(Default, tree_hash_derive::TreeHash)]
+#[derive(tree_hash_derive::TreeHash)]
 pub struct BeaconBlockHeader {
     #[schemars(schema_with = "crate::string_schema")]
     #[serde(with = "eth2_serde_utils::quoted_u64")]
@@ -53,7 +53,6 @@ pub struct SigningData {
 }
 
 #[cw_serde]
-#[derive(Default)]
 pub struct ExtendedBeaconBlockHeader {
     pub header: BeaconBlockHeader,
     pub beacon_block_root: H256,

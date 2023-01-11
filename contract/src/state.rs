@@ -11,7 +11,7 @@ use types::{
 
 pub const STATE: Item<ContractState> = Item::new("state");
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ContractState {
     pub initialized: bool,
 

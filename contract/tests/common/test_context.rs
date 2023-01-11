@@ -1,5 +1,4 @@
-
-use cosmwasm_std::{Addr};
+use cosmwasm_std::Addr;
 use cw_eth2_lc::{
     contract::{Contract, ContractContext},
     state::ContractState,
@@ -23,7 +22,7 @@ pub fn get_test_context(
     init_options: Option<InitOptions>,
 ) -> TestContext<'static> {
     let (headers, updates, init_input) = get_test_data(init_options);
-    let contract = if true {
+    let contract = if !true {
         let mut contract = Contract::new(
             ContractContext {
                 env: cosmwasm_std::testing::mock_env(),

@@ -10,7 +10,6 @@ use types::{
     BlockHeader, H256,
 };
 
-
 pub trait ContractInterface {
     // Execute
     fn register_submitter(&mut self) -> Result<()>;

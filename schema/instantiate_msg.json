@@ -1,0 +1,251 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "args"
+  ],
+  "properties": {
+    "args": {
+      "$ref": "#/definitions/InitInput"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "Array_of_uint8": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      }
+    },
+    "BeaconBlockHeader": {
+      "type": "object",
+      "required": [
+        "body_root",
+        "parent_root",
+        "proposer_index",
+        "slot",
+        "state_root"
+      ],
+      "properties": {
+        "body_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "parent_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "proposer_index": {
+          "type": "string"
+        },
+        "slot": {
+          "type": "string"
+        },
+        "state_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BlockHeader": {
+      "type": "object",
+      "required": [
+        "author",
+        "base_fee_per_gas",
+        "difficulty",
+        "extra_data",
+        "gas_limit",
+        "gas_used",
+        "log_bloom",
+        "mix_hash",
+        "nonce",
+        "number",
+        "parent_hash",
+        "receipts_root",
+        "state_root",
+        "timestamp",
+        "transactions_root",
+        "uncles_hash"
+      ],
+      "properties": {
+        "author": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "base_fee_per_gas": {
+          "type": "string"
+        },
+        "difficulty": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "extra_data": {
+          "type": "string"
+        },
+        "gas_limit": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "gas_used": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "hash": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Array_of_uint8"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "log_bloom": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "mix_hash": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "nonce": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "number": {
+          "type": "string"
+        },
+        "parent_hash": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "partial_hash": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Array_of_uint8"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receipts_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "state_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "transactions_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "uncles_hash": {
+          "$ref": "#/definitions/Array_of_uint8"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExtendedBeaconBlockHeader": {
+      "type": "object",
+      "required": [
+        "beacon_block_root",
+        "execution_block_hash",
+        "header"
+      ],
+      "properties": {
+        "beacon_block_root": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "execution_block_hash": {
+          "$ref": "#/definitions/Array_of_uint8"
+        },
+        "header": {
+          "$ref": "#/definitions/BeaconBlockHeader"
+        }
+      },
+      "additionalProperties": false
+    },
+    "InitInput": {
+      "type": "object",
+      "required": [
+        "current_sync_committee",
+        "finalized_beacon_header",
+        "finalized_execution_header",
+        "hashes_gc_threshold",
+        "max_submitted_blocks_by_account",
+        "network",
+        "next_sync_committee",
+        "validate_updates",
+        "verify_bls_signatures"
+      ],
+      "properties": {
+        "current_sync_committee": {
+          "$ref": "#/definitions/SyncCommittee"
+        },
+        "finalized_beacon_header": {
+          "$ref": "#/definitions/ExtendedBeaconBlockHeader"
+        },
+        "finalized_execution_header": {
+          "$ref": "#/definitions/BlockHeader"
+        },
+        "hashes_gc_threshold": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "max_submitted_blocks_by_account": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "network": {
+          "type": "string"
+        },
+        "next_sync_committee": {
+          "$ref": "#/definitions/SyncCommittee"
+        },
+        "trusted_signer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "validate_updates": {
+          "type": "boolean"
+        },
+        "verify_bls_signatures": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "String": {
+      "type": "string"
+    },
+    "SyncCommittee": {
+      "type": "object",
+      "required": [
+        "aggregate_pubkey",
+        "pubkeys"
+      ],
+      "properties": {
+        "aggregate_pubkey": {
+          "$ref": "#/definitions/String"
+        },
+        "pubkeys": {
+          "$ref": "#/definitions/SyncCommitteePublicKeys"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SyncCommitteePublicKeys": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/String"
+      }
+    }
+  }
+}

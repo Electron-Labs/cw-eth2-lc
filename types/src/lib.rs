@@ -1,3 +1,4 @@
+use cosmwasm_schema::cw_serde;
 use derive_more::{
     Add, AddAssign, Display, Div, DivAssign, From, Into, Mul, MulAssign, Rem, RemAssign, Sub,
     SubAssign,
@@ -7,10 +8,7 @@ use rlp::{
     Encodable as RlpEncodable, Rlp, RlpStream,
 };
 use rlp_derive::RlpDecodable as RlpDecodableDerive;
-use schemars::{
-    schema::{InstanceType, SchemaObject},
-    JsonSchema,
-};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 
@@ -112,8 +110,7 @@ pub type Public = H512;
 pub type Signature = H520;
 
 // Block Header
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cw_serde]
 pub struct BlockHeader {
     pub parent_hash: H256,
     pub uncles_hash: H256,
@@ -123,17 +120,21 @@ pub struct BlockHeader {
     pub receipts_root: H256,
     pub log_bloom: Bloom,
     pub difficulty: U256,
+    #[cfg_attr(all(feature = "eth2"), schemars(schema_with = "crate::string_schema"))]
     #[cfg_attr(all(feature = "eth2"), serde(with = "eth2_serde_utils::u64_hex_be"))]
     pub number: u64,
     pub gas_limit: U256,
     pub gas_used: U256,
+    #[cfg_attr(all(feature = "eth2"), schemars(schema_with = "crate::string_schema"))]
     #[cfg_attr(all(feature = "eth2"), serde(with = "eth2_serde_utils::u64_hex_be"))]
     pub timestamp: u64,
+    #[cfg_attr(all(feature = "eth2"), schemars(schema_with = "crate::string_schema"))]
     #[cfg_attr(all(feature = "eth2"), serde(with = "eth2_serde_utils::hex_vec"))]
     pub extra_data: Vec<u8>,
     pub mix_hash: H256,
     pub nonce: H64,
     #[cfg(feature = "eip1559")]
+    #[cfg_attr(all(feature = "eth2"), schemars(schema_with = "crate::string_schema"))]
     #[cfg_attr(all(feature = "eth2"), serde(with = "eth2_serde_utils::u64_hex_be"))]
     pub base_fee_per_gas: u64,
 
@@ -141,92 +142,8 @@ pub struct BlockHeader {
     pub partial_hash: Option<H256>,
 }
 
-impl JsonSchema for BlockHeader {
-    fn schema_name() -> String {
-        "blockHeader".to_string()
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let mut schema = SchemaObject {
-            instance_type: Some(InstanceType::Object.into()),
-            ..Default::default()
-        };
-        let obj = schema.object();
-
-        obj.required.insert("parentHash".to_owned());
-        obj.properties
-            .insert("parentHash".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("unclesHash".to_owned());
-        obj.properties
-            .insert("unclesHash".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("author".to_owned());
-        obj.properties
-            .insert("author".to_owned(), <Address>::json_schema(gen));
-
-        obj.required.insert("stateRoot".to_owned());
-        obj.properties
-            .insert("stateRoot".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("transactionsRoot".to_owned());
-        obj.properties
-            .insert("transactionsRoot".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("receiptsRoot".to_owned());
-        obj.properties
-            .insert("receiptsRoot".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("logBloom".to_owned());
-        obj.properties
-            .insert("logBloom".to_owned(), <Bloom>::json_schema(gen));
-
-        obj.required.insert("difficulty".to_owned());
-        obj.properties
-            .insert("difficulty".to_owned(), <U256>::json_schema(gen));
-
-        obj.required.insert("number".to_owned());
-        obj.properties
-            .insert("number".to_owned(), <String>::json_schema(gen));
-
-        obj.required.insert("gasLimit".to_owned());
-        obj.properties
-            .insert("gasLimit".to_owned(), <U256>::json_schema(gen));
-
-        obj.required.insert("gasUsed".to_owned());
-        obj.properties
-            .insert("gasUsed".to_owned(), <U256>::json_schema(gen));
-
-        obj.required.insert("timestamp".to_owned());
-        obj.properties
-            .insert("timestamp".to_owned(), <String>::json_schema(gen));
-
-        obj.required.insert("extraData".to_owned());
-        obj.properties
-            .insert("extraData".to_owned(), <String>::json_schema(gen));
-
-        obj.required.insert("minHash".to_owned());
-        obj.properties
-            .insert("minHash".to_owned(), <H256>::json_schema(gen));
-
-        obj.required.insert("nonce".to_owned());
-        obj.properties
-            .insert("nonce".to_owned(), <H64>::json_schema(gen));
-
-        obj.required.insert("baseFeePerGas".to_owned());
-        obj.properties
-            .insert("baseFeePerGas".to_owned(), <String>::json_schema(gen));
-
-        obj.required.insert("hash".to_owned());
-        obj.properties
-            .insert("hash".to_owned(), <Option<H256>>::json_schema(gen));
-
-        obj.required.insert("partial_hash".to_owned());
-        obj.properties
-            .insert("partial_hash".to_owned(), <Option<H256>>::json_schema(gen));
-
-        schema.into()
-    }
+pub fn string_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+    String::json_schema(gen)
 }
 
 pub struct BlockHeaderLondon {

@@ -1,12 +1,15 @@
 use cosmwasm_std::{
-    testing::{mock_env, mock_info},
+    testing::{mock_dependencies, mock_env, mock_info},
     Addr, DepsMut,
 };
 use cw_eth2_lc::{contract::Contract, Result};
 
 use types::{eth2::LightClientUpdate, BlockHeader};
 
-use crate::common::test_contract_client::IntegrationTestContractImplementation;
+use crate::common::{
+    contract_interface::UnitTestContractImplementation,
+    test_contract_client::IntegrationTestContractImplementation,
+};
 
 use super::{contract_interface::ContractInterface, get_test_data, InitOptions};
 
@@ -17,17 +20,21 @@ pub struct TestContext<'a, 'b> {
 }
 
 pub fn get_test_context<'a>(
-    deps: DepsMut<'a>,
+    _deps: DepsMut<'a>,
     contract_caller: Addr,
     init_options: Option<InitOptions>,
 ) -> TestContext<'static, 'a> {
     let (headers, updates, init_input) = get_test_data(init_options);
-    let contract = if !true {
-        let contract = Contract::new_mut(
+    let contract = if true {
+        let contract = Contract::new(
             mock_env(),
-            mock_info(contract_caller.to_string().as_str(), &[]),
-            deps,
+            Some(mock_info(contract_caller.to_string().as_str(), &[])),
         );
+        let mut contract = UnitTestContractImplementation {
+            contract,
+            deps: mock_dependencies(),
+        };
+        contract.contract.init(contract.deps.as_mut(), init_input);
         Box::new(contract) as Box<dyn ContractInterface + 'a>
     } else {
         let contract = Box::new(IntegrationTestContractImplementation::new(init_input).unwrap())

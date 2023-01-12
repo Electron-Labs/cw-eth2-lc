@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+
 use derive_more::{
     Add, AddAssign, Display, Div, DivAssign, From, Into, Mul, MulAssign, Rem, RemAssign, Sub,
     SubAssign,

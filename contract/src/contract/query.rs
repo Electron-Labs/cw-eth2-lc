@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Deps};
 
 use types::{
     eth2::{ExtendedBeaconBlockHeader, LightClientState},
@@ -9,8 +9,7 @@ use super::Contract;
 
 impl Contract<'_> {
     /// Returns finalized execution block number
-    pub fn last_block_number(&self) -> u64 {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn last_block_number(&self, deps: Deps) -> u64 {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state
@@ -20,9 +19,7 @@ impl Contract<'_> {
     }
 
     /// Returns finalized execution block hash
-    pub fn block_hash_safe(&self, block_number: u64) -> Option<H256> {
-        let deps = self.ctx.get_deps().unwrap();
-
+    pub fn block_hash_safe(&self, deps: Deps, block_number: u64) -> Option<H256> {
         Some(
             self.state
                 .mapped
@@ -33,8 +30,7 @@ impl Contract<'_> {
     }
 
     /// Checks if the execution header is already submitted.
-    pub fn is_known_execution_header(&self, hash: H256) -> bool {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn is_known_execution_header(&self, deps: Deps, hash: H256) -> bool {
         let _non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         self.state
@@ -44,32 +40,28 @@ impl Contract<'_> {
     }
 
     /// Get finalized beacon block root
-    pub fn finalized_beacon_block_root(&self) -> H256 {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn finalized_beacon_block_root(&self, deps: Deps) -> H256 {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state.finalized_beacon_header.beacon_block_root
     }
 
     /// Returns finalized beacon block slot
-    pub fn finalized_beacon_block_slot(&self) -> u64 {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn finalized_beacon_block_slot(&self, deps: Deps) -> u64 {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state.finalized_beacon_header.header.slot
     }
 
     /// Returns finalized beacon block header
-    pub fn finalized_beacon_block_header(&self) -> ExtendedBeaconBlockHeader {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn finalized_beacon_block_header(&self, deps: Deps) -> ExtendedBeaconBlockHeader {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state.finalized_beacon_header
     }
 
     /// Get the current light client state
-    pub fn get_light_client_state(&self) -> LightClientState {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn get_light_client_state(&self, deps: Deps) -> LightClientState {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         LightClientState {
@@ -79,14 +71,11 @@ impl Contract<'_> {
         }
     }
 
-    pub fn is_submitter_registered(&self, addr: Addr) -> bool {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn is_submitter_registered(&self, deps: Deps, addr: Addr) -> bool {
         self.state.mapped.submitters.has(deps.storage, addr)
     }
 
-    pub fn get_num_of_submitted_blocks_by_account(&self, addr: Addr) -> u32 {
-        let deps = self.ctx.get_deps().unwrap();
-
+    pub fn get_num_of_submitted_blocks_by_account(&self, deps: Deps, addr: Addr) -> u32 {
         self.state
             .mapped
             .submitters
@@ -94,15 +83,13 @@ impl Contract<'_> {
             .unwrap_or_else(|_| panic!("{}", "The account is not registered"))
     }
 
-    pub fn get_max_submitted_blocks_by_account(&self) -> u32 {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn get_max_submitted_blocks_by_account(&self, deps: Deps) -> u32 {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state.max_submitted_blocks_by_account
     }
 
-    pub fn get_trusted_signer(&self) -> Option<Addr> {
-        let deps = self.ctx.get_deps().unwrap();
+    pub fn get_trusted_signer(&self, deps: Deps) -> Option<Addr> {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         non_mapped_state.trusted_signer

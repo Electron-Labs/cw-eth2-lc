@@ -21,27 +21,19 @@ use crate::state::ContractState;
 use self::ctx::ContractContext;
 
 pub struct Contract<'a> {
-    pub ctx: ContractContext<'a>,
+    pub ctx: ContractContext,
     pub state: ContractState<'a>,
 }
 
-impl<'a> Contract<'a> {
-    pub fn new(env: Env, deps: Deps<'a>) -> Self {
+impl Contract<'_> {
+    pub fn new(env: Env, info: Option<MessageInfo>) -> Self {
         Self {
-            ctx: ContractContext::new(env, None, deps),
+            ctx: ContractContext::new(env, info),
             state: ContractState::new(),
         }
     }
 
-    pub fn new_mut(env: Env, info: MessageInfo, deps: DepsMut<'a>) -> Self {
-        Self {
-            ctx: ContractContext::new_mut(env, Some(info), deps),
-            state: ContractState::new(),
-        }
-    }
-
-    fn validate_light_client_update(&self, update: &LightClientUpdate) {
-        let deps = self.ctx.get_deps().unwrap();
+    fn validate_light_client_update(&self, deps: Deps, update: &LightClientUpdate) {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         #[cfg(feature = "logs")]
@@ -49,7 +41,7 @@ impl<'a> Contract<'a> {
 
         let finalized_period =
             compute_sync_committee_period(non_mapped_state.finalized_beacon_header.header.slot);
-        self.verify_finality_branch(update, finalized_period);
+        self.verify_finality_branch(deps, update, finalized_period);
 
         // Verify sync committee has sufficient participants
         let sync_committee_bits =
@@ -78,8 +70,12 @@ impl<'a> Contract<'a> {
         env::log_str(format!("Finish validate update. Used gas: {}", env::used_gas().0).as_str());
     }
 
-    fn verify_finality_branch(&self, update: &LightClientUpdate, finalized_period: u64) {
-        let deps = self.ctx.get_deps().unwrap();
+    fn verify_finality_branch(
+        &self,
+        deps: Deps,
+        update: &LightClientUpdate,
+        finalized_period: u64,
+    ) {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         // The active header will always be the finalized header because we don't accept updates without the finality update.
@@ -166,7 +162,6 @@ impl<'a> Contract<'a> {
     ) {
         use utility::consensus::DOMAIN_SYNC_COMMITTEE;
 
-        let deps = self.ctx.get_deps().unwrap();
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         let config = NetworkConfig::new(&non_mapped_state.network);
@@ -220,13 +215,12 @@ impl<'a> Contract<'a> {
         );
     }
 
-    fn update_finalized_header(&mut self, finalized_header: ExtendedBeaconBlockHeader) {
-        let deps = self.ctx.get_deps_mut().unwrap();
-        let mut non_mapped_state = self
-            .state
-            .non_mapped
-            .load(deps.borrow_mut().storage)
-            .unwrap();
+    fn update_finalized_header(
+        &self,
+        mut deps: DepsMut,
+        finalized_header: ExtendedBeaconBlockHeader,
+    ) {
+        let mut non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         #[cfg(feature = "logs")]
         env::log_str(format!("Update finalized header. Used gas: {}", env::used_gas().0).as_str());
@@ -235,7 +229,7 @@ impl<'a> Contract<'a> {
             .mapped
             .unfinalized_headers
             .load(
-                deps.borrow_mut().storage,
+                deps.storage,
                 finalized_header.execution_block_hash.to_string(),
             )
             .unwrap_or_else(|_| panic!("{}", "Unknown execution block hash"));
@@ -261,12 +255,12 @@ impl<'a> Contract<'a> {
             self.state
                 .mapped
                 .unfinalized_headers
-                .remove(deps.borrow_mut().storage, cursor_header_hash.to_string());
+                .remove(deps.storage, cursor_header_hash.to_string());
             self.state
                 .mapped
                 .finalized_execution_blocks
                 .save(
-                    deps.borrow_mut().storage,
+                    deps.storage,
                     cursor_header.block_number,
                     &cursor_header_hash,
                 )
@@ -285,10 +279,7 @@ impl<'a> Contract<'a> {
                 .state
                 .mapped
                 .unfinalized_headers
-                .load(
-                    deps.borrow_mut().storage,
-                    cursor_header.parent_hash.to_string(),
-                )
+                .load(deps.storage, cursor_header.parent_hash.to_string())
                 .unwrap_or_else(|_| {
                     panic!(
                         "{}",
@@ -306,11 +297,11 @@ impl<'a> Contract<'a> {
 
         self.state
             .non_mapped
-            .save(deps.borrow_mut().storage, &non_mapped_state)
+            .save(deps.storage, &non_mapped_state)
             .unwrap();
 
         for (submitter, num_of_removed_headers) in &submitters_update {
-            self.update_submitter(submitter, -(*num_of_removed_headers as i64));
+            self.update_submitter(&mut deps, submitter, -(*num_of_removed_headers as i64));
         }
 
         #[cfg(feature = "logs")]
@@ -321,21 +312,22 @@ impl<'a> Contract<'a> {
             )
             .as_str(),
         );
+        
+        self.state
+            .non_mapped
+            .save(deps.storage, &non_mapped_state)
+            .unwrap();
 
         if finalized_execution_header_info.block_number > non_mapped_state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(
+                deps,
                 finalized_execution_header_info.block_number - non_mapped_state.hashes_gc_threshold,
             );
         }
     }
 
-    fn commit_light_client_update(&mut self, update: LightClientUpdate) {
-        let deps = self.ctx.get_deps_mut().unwrap();
-        let mut non_mapped_state = self
-            .state
-            .non_mapped
-            .load(deps.borrow_mut().storage)
-            .unwrap();
+    fn commit_light_client_update(&self, deps: DepsMut, update: LightClientUpdate) {
+        let mut non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         // Update finalized header
         let finalized_header_update = update.finality_update.header_update;
@@ -353,25 +345,18 @@ impl<'a> Contract<'a> {
 
         self.state
             .non_mapped
-            .save(deps.borrow_mut().storage, &non_mapped_state)
+            .save(deps.storage, &non_mapped_state)
             .unwrap();
-        self.update_finalized_header(finalized_header_update.into());
+        self.update_finalized_header(deps, finalized_header_update.into());
     }
 
     /// Remove information about the headers that are at least as old as the given block number.
-    fn gc_finalized_execution_blocks(&mut self, mut header_number: u64) {
-        let deps = self.ctx.get_deps_mut().unwrap();
-        let _non_mapped_state = self
-            .state
-            .non_mapped
-            .load(deps.borrow_mut().storage)
-            .unwrap();
-
+    fn gc_finalized_execution_blocks(&self, deps: DepsMut, mut header_number: u64) {
         loop {
             self.state
                 .mapped
                 .finalized_execution_blocks
-                .remove(deps.borrow_mut().storage, header_number);
+                .remove(deps.storage, header_number);
 
             if header_number == 0 {
                 break;
@@ -381,19 +366,14 @@ impl<'a> Contract<'a> {
         }
     }
 
-    fn update_submitter(&self, submitter: &Addr, value: i64) {
-        let deps = self.ctx.get_deps_mut().unwrap();
-        let non_mapped_state = self
-            .state
-            .non_mapped
-            .load(deps.borrow_mut().storage)
-            .unwrap();
+    fn update_submitter(&self, deps: &mut DepsMut, submitter: &Addr, value: i64) {
+        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         let mut num_of_submitted_headers: i64 = self
             .state
             .mapped
             .submitters
-            .load(deps.borrow_mut().storage, submitter.clone())
+            .load(deps.storage, submitter.clone())
             .unwrap_or_else(|_| {
                 panic!(
                     "{}",
@@ -413,16 +393,11 @@ impl<'a> Contract<'a> {
         self.state
             .mapped
             .submitters
-            .save(
-                deps.borrow_mut().storage,
-                submitter.clone(),
-                &num_of_submitted_headers,
-            )
+            .save(deps.storage, submitter.clone(), &num_of_submitted_headers)
             .unwrap();
     }
 
-    fn is_light_client_update_allowed(&self) {
-        let deps = self.ctx.get_deps().unwrap();
+    fn is_light_client_update_allowed(&self, deps: Deps) {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         if let Some(trusted_signer) = &non_mapped_state.trusted_signer {

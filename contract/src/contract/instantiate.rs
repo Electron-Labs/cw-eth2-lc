@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use cosmwasm_std::DepsMut;
 use utility::{
     consensus::Network,
     types::{ExecutionHeaderInfo, InitInput},
@@ -10,8 +11,7 @@ use crate::state::NonMappedState;
 use super::Contract;
 
 impl Contract<'_> {
-    pub fn init(&mut self, args: InitInput) {
-        let deps = self.ctx.get_deps_mut().unwrap();
+    pub fn init(&mut self, deps: DepsMut, args: InitInput) {
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
 
@@ -41,21 +41,24 @@ impl Contract<'_> {
             submitter: self.ctx.info.clone().unwrap().sender,
         };
 
-        self.state.non_mapped.save(
-            deps.borrow_mut().storage,
-            &NonMappedState {
-                trusted_signer: args.trusted_signer,
-                validate_updates: args.validate_updates,
-                verify_bls_signatures: args.verify_bls_signatures,
-                hashes_gc_threshold: args.hashes_gc_threshold,
-                network,
-                max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
-                finalized_beacon_header: args.finalized_beacon_header,
-                finalized_execution_header: Some(finalized_execution_header_info),
-                current_sync_committee: Some(args.current_sync_committee),
-                next_sync_committee: Some(args.next_sync_committee),
-                initialized: true,
-            },
-        ).unwrap();
+        self.state
+            .non_mapped
+            .save(
+                deps.storage,
+                &NonMappedState {
+                    trusted_signer: args.trusted_signer,
+                    validate_updates: args.validate_updates,
+                    verify_bls_signatures: args.verify_bls_signatures,
+                    hashes_gc_threshold: args.hashes_gc_threshold,
+                    network,
+                    max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
+                    finalized_beacon_header: args.finalized_beacon_header,
+                    finalized_execution_header: Some(finalized_execution_header_info),
+                    current_sync_committee: Some(args.current_sync_committee),
+                    next_sync_committee: Some(args.next_sync_committee),
+                    initialized: true,
+                },
+            )
+            .unwrap();
     }
 }

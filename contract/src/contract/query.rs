@@ -20,19 +20,15 @@ impl Contract<'_> {
 
     /// Returns finalized execution block hash
     pub fn block_hash_safe(&self, deps: Deps, block_number: u64) -> Option<H256> {
-        Some(
-            self.state
-                .mapped
-                .finalized_execution_blocks
-                .load(deps.storage, block_number)
-                .unwrap(),
-        )
+        self.state
+            .mapped
+            .finalized_execution_blocks
+            .load(deps.storage, block_number)
+            .ok()
     }
 
     /// Checks if the execution header is already submitted.
     pub fn is_known_execution_header(&self, deps: Deps, hash: H256) -> bool {
-        let _non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-
         self.state
             .mapped
             .unfinalized_headers

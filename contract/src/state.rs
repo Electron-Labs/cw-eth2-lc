@@ -1,4 +1,4 @@
-use cw_storage_plus::{Item, Map};
+use cw_storage_plus::{IndexedMap, Item, Map};
 
 use utility::{consensus::Network, types::ExecutionHeaderInfo};
 
@@ -60,9 +60,9 @@ impl ContractState<'_> {
             non_mapped: Item::new("non_mapped"),
             mapped: MappedState {
                 // TODO better keys
-                finalized_execution_blocks: Map::new("1"),
-                unfinalized_headers: Map::new("2"),
-                submitters: Map::new("3"),
+                finalized_execution_blocks: Map::new("finalized_execution_blocks"),
+                unfinalized_headers: Map::new("unfinalized_headers"),
+                submitters: Map::new("submitters"),
             },
         }
     }

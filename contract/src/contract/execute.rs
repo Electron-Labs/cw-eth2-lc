@@ -23,10 +23,13 @@ impl Contract<'_> {
     }
 
     pub fn unregister_submitter(&self, deps: DepsMut) {
-        let _non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
+        let addr = self.ctx.info.as_ref().unwrap().sender.clone();
 
-        // TODO add validation?
-        let addr = self.ctx.info.clone().unwrap().sender;
+        assert!(
+            self.state.mapped.submitters.has(deps.storage, addr.clone()),
+            "The account is not registered"
+        );
+
         self.state.mapped.submitters.remove(deps.storage, addr);
     }
 
@@ -89,11 +92,10 @@ impl Contract<'_> {
         };
 
         assert!(
-            self.state
+            !self.state
                 .mapped
                 .unfinalized_headers
-                .load(deps.storage, block_hash.to_string())
-                .is_err(),
+                .has(deps.storage, block_hash.to_string()),
             "{}",
             format!("The block {} already submitted!", &block_hash).as_str()
         );

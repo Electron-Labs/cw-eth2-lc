@@ -38,12 +38,11 @@ pub fn test_header_root() -> Result<()> {
 
 #[test]
 pub fn test_submit_update_two_periods() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
     // After submitting the execution header, it should be present in the execution headers list
@@ -82,12 +81,11 @@ pub fn test_submit_update_two_periods() -> Result<()> {
 
 #[test]
 pub fn test_submit_execution_block_from_fork_chain() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
     submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).collect())?;
@@ -128,13 +126,11 @@ pub fn test_submit_execution_block_from_fork_chain() -> Result<()> {
 
 #[test]
 pub fn test_gc_headers() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates,
     } = get_test_context(
-        deps.as_mut(),
         accounts(0),
         Some(InitOptions {
             validate_updates: true,
@@ -180,13 +176,11 @@ pub fn test_gc_headers() -> Result<()> {
 #[test]
 // #[should_panic](expected = "exhausted the limit of blocks")]
 pub fn test_panic_on_exhausted_submit_limit() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
     } = get_test_context(
-        deps.as_mut(),
         accounts(0),
         Some(InitOptions {
             validate_updates: true,
@@ -207,13 +201,11 @@ pub fn test_panic_on_exhausted_submit_limit() -> Result<()> {
 
 #[test]
 pub fn test_max_submit_blocks_by_account_limit() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
     } = get_test_context(
-        deps.as_mut(),
         accounts(0),
         Some(InitOptions {
             validate_updates: true,
@@ -232,14 +224,12 @@ pub fn test_max_submit_blocks_by_account_limit() -> Result<()> {
 #[test]
 // #[should_panic](expected = "only trusted_signer can update the client")]
 pub fn test_trusted_signer() -> Result<()> {
-    let mut deps = mock_dependencies();
     let trusted_signer = accounts(1);
     let TestContext {
         mut contract,
         headers: _,
         updates,
     } = get_test_context(
-        deps.as_mut(),
         accounts(0),
         Some(InitOptions {
             validate_updates: true,
@@ -262,12 +252,11 @@ pub fn test_trusted_signer() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Invalid finality proof")]
 pub fn test_panic_on_invalid_finality_proof() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
     update.finality_update.finality_branch[5] = H256::from(
         hex::decode("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap(),
@@ -286,12 +275,11 @@ pub fn test_panic_on_invalid_finality_proof() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Invalid finality proof")]
 pub fn test_panic_on_empty_finality_proof() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
     update.finality_update.finality_branch = vec![];
     if contract
@@ -307,12 +295,11 @@ pub fn test_panic_on_empty_finality_proof() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Invalid execution block hash proof")]
 pub fn test_panic_on_invalid_execution_block_proof() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
     update.finality_update.header_update.execution_hash_branch[5] = H256::from(
         hex::decode("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef").unwrap(),
@@ -330,12 +317,11 @@ pub fn test_panic_on_invalid_execution_block_proof() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Invalid execution block hash proof")]
 pub fn test_panic_on_empty_execution_block_proof() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
     update.finality_update.header_update.execution_hash_branch = vec![];
     if contract
@@ -351,12 +337,11 @@ pub fn test_panic_on_empty_execution_block_proof() -> Result<()> {
 #[test]
 // #[should_panic](expected = "The acceptable update periods are")]
 pub fn test_panic_on_skip_update_period() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     let mut update = updates[1].clone();
     update.finality_update.header_update.beacon_header.slot =
@@ -377,12 +362,11 @@ pub fn test_panic_on_skip_update_period() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Unknown execution block hash")]
 pub fn test_panic_on_submit_update_with_missing_execution_blocks() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
     submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).take(5).collect())?;
@@ -400,12 +384,11 @@ pub fn test_panic_on_submit_update_with_missing_execution_blocks() -> Result<()>
 #[test]
 // #[should_panic](expected = "already submitted")]
 pub fn test_panic_on_submit_same_execution_blocks() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
     contract.submit_execution_header(headers[1].clone())?;
@@ -419,12 +402,11 @@ pub fn test_panic_on_submit_same_execution_blocks() -> Result<()> {
 #[test]
 // #[should_panic](expected = "can't submit blocks because it is not registered")]
 pub fn test_panic_on_submit_execution_block_after_submitter_unregistered() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
     contract.unregister_submitter()?;
@@ -442,7 +424,7 @@ pub fn test_panic_on_submit_execution_block_after_submitter_unregistered() -> Re
 //         mut contract,
 //         headers: _,
 //         updates,
-//     } = get_test_context(deps.as_mut(),None);
+//     } = get_test_context(None);
 //     set_env!(prepaid_gas: 10u64.pow(18), predecessor_account_id: accounts(0), current_account_id: accounts(0));
 //     contract.set_paused(PAUSE_SUBMIT_UPDATE);
 //     set_env!(prepaid_gas: 10u64.pow(18), predecessor_account_id: accounts(1), current_account_id: accounts(0));
@@ -452,12 +434,11 @@ pub fn test_panic_on_submit_execution_block_after_submitter_unregistered() -> Re
 #[test]
 // #[should_panic](expected = "The active header slot number should be higher than the finalized slot")]
 pub fn test_panic_on_submit_outdated_update() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     if contract
         .submit_beacon_chain_light_client_update(updates[0].clone())
@@ -472,12 +453,11 @@ pub fn test_panic_on_submit_outdated_update() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Parent should be submitted first")]
 pub fn test_panic_on_submit_blocks_with_unknown_parent() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     assert_eq!(contract.last_block_number()?, headers[0].number);
     contract.register_submitter()?;
@@ -498,7 +478,7 @@ pub fn test_panic_on_submit_blocks_with_unknown_parent() -> Result<()> {
 //         mut contract,
 //         headers,
 //         updates: _,
-//     } = get_test_context(deps.as_mut(),accounts(0), None);
+//     } = get_test_context(accounts(0), None);
 
 //     assert_eq!(contract.last_block_number()?, headers[0].number);
 
@@ -512,12 +492,11 @@ pub fn test_panic_on_submit_blocks_with_unknown_parent() -> Result<()> {
 #[test]
 // #[should_panic](expected = "can't submit blocks because it is not registered")]
 pub fn test_panic_on_skipping_register_submitter() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers,
         updates: _,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
 
     assert_eq!(contract.last_block_number()?, headers[0].number);
 
@@ -531,12 +510,11 @@ pub fn test_panic_on_skipping_register_submitter() -> Result<()> {
 #[test]
 // #[should_panic](expected = "Sync committee bits sum is less than 2/3 threshold, bits sum: 341")]
 pub fn test_panic_on_sync_committee_bits_is_less_than_threshold() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
 
     let mut sync_committee_bits = bitarr![u8, Lsb0; 0; 512];
@@ -567,12 +545,11 @@ pub fn test_panic_on_sync_committee_bits_is_less_than_threshold() -> Result<()> 
 #[test]
 // #[should_panic](expected = "The sync committee update is missed")]
 pub fn test_panic_on_missing_sync_committee_update() -> Result<()> {
-    let mut deps = mock_dependencies();
     let TestContext {
         mut contract,
         headers: _,
         updates,
-    } = get_test_context(deps.as_mut(), accounts(0), None);
+    } = get_test_context(accounts(0), None);
     let mut update = updates[1].clone();
     update.sync_committee_update = None;
     if contract
@@ -594,7 +571,6 @@ mod mainnet_tests {
     // expected = "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
     // )]
     pub fn test_panic_on_init_in_trustless_mode_without_bls_on_mainnet() -> Result<()> {
-        let mut deps = mock_dependencies();
         let (_headers, _updates, init_input) = get_test_data(Some(InitOptions {
             validate_updates: true,
             verify_bls_signatures: false,
@@ -612,7 +588,6 @@ mod mainnet_tests {
     // expected = "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
     // )]
     pub fn test_panic_on_init_in_trustless_mode_without_bls_feature_flag() -> Result<()> {
-        let mut deps = mock_dependencies();
         let (_headers, _updates, init_input) = get_test_data(Some(InitOptions {
             validate_updates: true,
             verify_bls_signatures: true,

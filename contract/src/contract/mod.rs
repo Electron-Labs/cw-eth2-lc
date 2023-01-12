@@ -312,11 +312,6 @@ impl Contract<'_> {
             )
             .as_str(),
         );
-        
-        self.state
-            .non_mapped
-            .save(deps.storage, &non_mapped_state)
-            .unwrap();
 
         if finalized_execution_header_info.block_number > non_mapped_state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(

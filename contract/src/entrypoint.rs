@@ -11,17 +11,19 @@ use crate::{
 };
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:eth2-client";
+const CONTRACT_NAME: &str = "crates.io:cw-eth2-cl";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // TODO optimize after reading eth2 light client spec
-// TODO use cosmwasm Maps, dont deserialize entire mapping for every call
 // TODO do we want to pause contract?
 // TODO add logs
 // TODO remove unwraps
 // TODO implement prover contract
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove all panics
+// TODO test with all features enabled
+// TODO use indexed map
+// TODO optimised test speed
 
 // TODO remove uneeded features and deps
 // TODO readme makes no sense

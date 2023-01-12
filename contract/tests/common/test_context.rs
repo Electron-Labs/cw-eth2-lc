@@ -1,3 +1,5 @@
+use std::env;
+
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
     Addr, DepsMut,
@@ -20,7 +22,6 @@ pub struct TestContext<'a, 'b> {
 }
 
 pub fn get_test_context<'a>(
-    _deps: DepsMut<'a>,
     contract_caller: Addr,
     init_options: Option<InitOptions>,
 ) -> TestContext<'static, 'a> {

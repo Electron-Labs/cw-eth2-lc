@@ -32,7 +32,7 @@ pub trait ContractInterface {
     fn get_trusted_signer(&self) -> Result<Option<Addr>>;
 }
 
-impl ContractInterface for Contract {
+impl ContractInterface for Contract<'_> {
     fn register_submitter(&mut self) -> Result<()> {
         let rc_self = AssertUnwindSafe(Rc::new(RefCell::new(self)));
         catch_unwind(|| rc_self.borrow_mut().register_submitter())
@@ -68,57 +68,68 @@ impl ContractInterface for Contract {
     }
 
     fn last_block_number(&self) -> Result<u64> {
-        catch_unwind(|| self.last_block_number())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.last_block_number())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn block_hash_safe(&self, block_number: u64) -> Result<Option<H256>> {
-        catch_unwind(|| self.block_hash_safe(block_number))
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.block_hash_safe(block_number))
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn is_known_execution_header(&self, hash: H256) -> Result<bool> {
-        catch_unwind(|| self.is_known_execution_header(hash))
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.is_known_execution_header(hash))
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn finalized_beacon_block_root(&self) -> Result<H256> {
-        catch_unwind(|| self.finalized_beacon_block_root())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.finalized_beacon_block_root())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn finalized_beacon_block_slot(&self) -> Result<u64> {
-        catch_unwind(|| self.finalized_beacon_block_slot())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.finalized_beacon_block_slot())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn finalized_beacon_block_header(&self) -> Result<ExtendedBeaconBlockHeader> {
-        catch_unwind(|| self.finalized_beacon_block_header())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.finalized_beacon_block_header())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn get_light_client_state(&self) -> Result<LightClientState> {
-        catch_unwind(|| self.get_light_client_state())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.get_light_client_state())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn is_submitter_registered(&self, addr: Addr) -> Result<bool> {
-        catch_unwind(|| self.is_submitter_registered(addr))
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.is_submitter_registered(addr))
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn get_num_of_submitted_blocks_by_account(&self, addr: Addr) -> Result<u32> {
-        catch_unwind(|| self.get_num_of_submitted_blocks_by_account(addr))
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.get_num_of_submitted_blocks_by_account(addr))
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn get_max_submitted_blocks_by_account(&self) -> Result<u32> {
-        catch_unwind(|| self.get_max_submitted_blocks_by_account())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.get_max_submitted_blocks_by_account())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 
     fn get_trusted_signer(&self) -> Result<Option<Addr>> {
-        catch_unwind(|| self.get_trusted_signer())
+        let safe = AssertUnwindSafe(self);
+        catch_unwind(|| safe.get_trusted_signer())
             .map_err(|_| "contract call panicked unexpectedly".into())
     }
 }

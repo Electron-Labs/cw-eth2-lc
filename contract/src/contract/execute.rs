@@ -5,30 +5,59 @@ use utility::types::ExecutionHeaderInfo;
 
 use super::Contract;
 
-impl Contract {
+impl Contract<'_> {
     pub fn register_submitter(&mut self) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let _non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
         // TODO add validation?
         let addr = self.ctx.info.clone().unwrap().sender;
         assert!(
-            !self.state.submitters.contains_key(&addr),
+            !self
+                .state
+                .mapped
+                .submitters
+                .has(deps.borrow_mut().storage, addr.clone()),
             "The account is already registered"
         );
 
-        self.state.submitters.insert(addr, 0);
+        self.state
+            .mapped
+            .submitters
+            .save(deps.borrow_mut().storage, addr, &0)
+            .unwrap();
     }
 
     pub fn unregister_submitter(&mut self) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let _non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         // TODO add validation?
         let addr = self.ctx.info.clone().unwrap().sender;
-        if self.state.submitters.remove(&addr).is_none() {
-            panic!("{}", "The account is not registered");
-        }
+        self.state
+            .mapped
+            .submitters
+            .remove(deps.borrow_mut().storage, addr);
     }
 
     pub fn submit_beacon_chain_light_client_update(&mut self, update: LightClientUpdate) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         self.is_light_client_update_allowed();
 
-        if self.state.validate_updates {
+        if non_mapped_state.validate_updates {
             self.validate_light_client_update(&update);
         }
 
@@ -36,11 +65,26 @@ impl Contract {
     }
 
     pub fn submit_execution_header(&mut self, block_header: BlockHeader) {
-        if self.state.finalized_beacon_header.execution_block_hash != block_header.parent_hash {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
+        if non_mapped_state
+            .finalized_beacon_header
+            .execution_block_hash
+            != block_header.parent_hash
+        {
             self.state
+                .mapped
                 .unfinalized_headers
-                .get(&block_header.parent_hash.to_string())
-                .unwrap_or_else(|| {
+                .load(
+                    deps.borrow_mut().storage,
+                    block_header.parent_hash.to_string(),
+                )
+                .unwrap_or_else(|_| {
                     panic!(
                         "{}",
                         format!(
@@ -69,19 +113,42 @@ impl Contract {
             block_number: block_header.number,
             submitter,
         };
-        let insert_result = self
-            .state
-            .unfinalized_headers
-            .insert(block_hash.to_string(), block_info);
+
         assert!(
-            insert_result.is_none(),
+            self.state
+                .mapped
+                .unfinalized_headers
+                .load(deps.borrow_mut().storage, block_hash.to_string())
+                .is_err(),
             "{}",
             format!("The block {} already submitted!", &block_hash).as_str()
         );
+
+        self.state
+            .mapped
+            .unfinalized_headers
+            .save(
+                deps.borrow_mut().storage,
+                block_hash.to_string(),
+                &block_info,
+            )
+            .unwrap();
     }
 
     pub fn update_trusted_signer(&mut self, trusted_signer: Option<Addr>) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let mut non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         assert!(self.ctx.info.clone().unwrap().sender == self.ctx.env.contract.address);
-        self.state.trusted_signer = trusted_signer;
+        non_mapped_state.trusted_signer = trusted_signer;
+
+        self.state
+            .non_mapped
+            .save(deps.borrow_mut().storage, &non_mapped_state)
+            .unwrap();
     }
 }

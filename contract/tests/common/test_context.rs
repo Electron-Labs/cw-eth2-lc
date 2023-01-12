@@ -1,8 +1,8 @@
-use cosmwasm_std::Addr;
-use cw_eth2_lc::{
-    contract::{Contract, ContractContext},
-    Result,
+use cosmwasm_std::{
+    testing::{mock_env, mock_info},
+    Addr, DepsMut,
 };
+use cw_eth2_lc::{contract::Contract, Result};
 
 use types::{eth2::LightClientUpdate, BlockHeader};
 
@@ -10,32 +10,28 @@ use crate::common::test_contract_client::IntegrationTestContractImplementation;
 
 use super::{contract_interface::ContractInterface, get_test_data, InitOptions};
 
-pub struct TestContext<'a> {
-    pub contract: Box<dyn ContractInterface>,
+pub struct TestContext<'a, 'b> {
+    pub contract: Box<dyn ContractInterface + 'b>,
     pub headers: &'a Vec<BlockHeader>,
     pub updates: &'a Vec<LightClientUpdate>,
 }
 
-pub fn get_test_context(
+pub fn get_test_context<'a>(
+    deps: DepsMut<'a>,
     contract_caller: Addr,
     init_options: Option<InitOptions>,
-) -> TestContext<'static> {
+) -> TestContext<'static, 'a> {
     let (headers, updates, init_input) = get_test_data(init_options);
     let contract = if !true {
-        let contract = Contract::new_instantiated(
-            ContractContext {
-                env: cosmwasm_std::testing::mock_env(),
-                info: Some(cosmwasm_std::testing::mock_info(
-                    contract_caller.as_str(),
-                    Vec::new().as_slice(),
-                )),
-            },
-            init_input,
+        let contract = Contract::new_mut(
+            mock_env(),
+            mock_info(contract_caller.to_string().as_str(), &[]),
+            deps,
         );
-        Box::new(contract) as Box<dyn ContractInterface>
+        Box::new(contract) as Box<dyn ContractInterface + 'a>
     } else {
         let contract = Box::new(IntegrationTestContractImplementation::new(init_input).unwrap())
-            as Box<dyn ContractInterface>;
+            as Box<dyn ContractInterface + 'a>;
         contract
     };
 
@@ -48,8 +44,8 @@ pub fn get_test_context(
     }
 }
 
-pub fn submit_and_check_execution_headers(
-    contract: &mut Box<dyn ContractInterface>,
+pub fn submit_and_check_execution_headers<'a>(
+    contract: &mut Box<dyn ContractInterface + 'a>,
     headers: Vec<&BlockHeader>,
 ) -> Result<()> {
     for header in headers {

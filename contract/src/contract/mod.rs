@@ -1,3 +1,4 @@
+pub mod ctx;
 pub mod execute;
 pub mod instantiate;
 pub mod query;
@@ -5,7 +6,7 @@ pub mod query;
 use std::collections::HashMap;
 
 use bitvec::{order::Lsb0, prelude::BitVec};
-use cosmwasm_std::{Addr, Env, MessageInfo};
+use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo};
 use tree_hash::TreeHash;
 
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
@@ -17,27 +18,37 @@ use utility::consensus::{
 
 use crate::state::ContractState;
 
-pub struct Contract {
-    pub ctx: ContractContext,
-    pub state: ContractState,
+use self::ctx::ContractContext;
+
+pub struct Contract<'a> {
+    pub ctx: ContractContext<'a>,
+    pub state: ContractState<'a>,
 }
 
-pub struct ContractContext {
-    pub env: Env,
-    pub info: Option<MessageInfo>,
-}
+impl<'a> Contract<'a> {
+    pub fn new(env: Env, deps: Deps<'a>) -> Self {
+        Self {
+            ctx: ContractContext::new(env, None, deps),
+            state: ContractState::new(),
+        }
+    }
 
-impl Contract {
-    pub fn new(ctx: ContractContext, state: ContractState) -> Self {
-        Self { ctx, state }
+    pub fn new_mut(env: Env, info: MessageInfo, deps: DepsMut<'a>) -> Self {
+        Self {
+            ctx: ContractContext::new_mut(env, Some(info), deps),
+            state: ContractState::new(),
+        }
     }
 
     fn validate_light_client_update(&self, update: &LightClientUpdate) {
+        let deps = self.ctx.get_deps().unwrap();
+        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
+
         #[cfg(feature = "logs")]
         env::log_str(format!("Validate update. Used gas: {}", env::used_gas().0).as_str());
 
         let finalized_period =
-            compute_sync_committee_period(self.state.finalized_beacon_header.header.slot);
+            compute_sync_committee_period(non_mapped_state.finalized_beacon_header.header.slot);
         self.verify_finality_branch(update, finalized_period);
 
         // Verify sync committee has sufficient participants
@@ -59,9 +70,8 @@ impl Contract {
         );
 
         #[cfg(feature = "bls")]
-        if self.state.verify_bls_signatures {
-            self.state
-                .verify_bls_signatures(update, sync_committee_bits, finalized_period);
+        if non_mapped_state.verify_bls_signatures {
+            non_mapped_state.verify_bls_signatures(update, sync_committee_bits, finalized_period);
         }
 
         #[cfg(feature = "logs")]
@@ -69,11 +79,14 @@ impl Contract {
     }
 
     fn verify_finality_branch(&self, update: &LightClientUpdate, finalized_period: u64) {
+        let deps = self.ctx.get_deps().unwrap();
+        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
+
         // The active header will always be the finalized header because we don't accept updates without the finality update.
         let active_header = &update.finality_update.header_update.beacon_header;
 
         assert!(
-            active_header.slot > self.state.finalized_beacon_header.header.slot,
+            active_header.slot > non_mapped_state.finalized_beacon_header.header.slot,
             "The active header slot number should be higher than the finalized slot"
         );
 
@@ -151,7 +164,12 @@ impl Contract {
         sync_committee_bits: BitVec<u8>,
         finalized_period: u64,
     ) {
-        let config = NetworkConfig::new(&self.state.network);
+        use utility::consensus::DOMAIN_SYNC_COMMITTEE;
+
+        let deps = self.ctx.get_deps().unwrap();
+        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
+
+        let config = NetworkConfig::new(&non_mapped_state.network);
         let signature_period = compute_sync_committee_period(update.signature_slot);
 
         // Verify signature period does not skip a sync committee period
@@ -168,9 +186,9 @@ impl Contract {
 
         // Verify sync committee aggregate signature
         let sync_committee = if signature_period == finalized_period {
-            self.state.current_sync_committee.get().unwrap()
+            non_mapped_state.current_sync_committee.unwrap()
         } else {
-            self.state.next_sync_committee.get().unwrap()
+            non_mapped_state.next_sync_committee.unwrap()
         };
 
         let participant_pubkeys =
@@ -203,19 +221,29 @@ impl Contract {
     }
 
     fn update_finalized_header(&mut self, finalized_header: ExtendedBeaconBlockHeader) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let mut non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         #[cfg(feature = "logs")]
         env::log_str(format!("Update finalized header. Used gas: {}", env::used_gas().0).as_str());
         let finalized_execution_header_info = self
             .state
+            .mapped
             .unfinalized_headers
-            .get(&finalized_header.execution_block_hash.to_string())
-            .unwrap_or_else(|| panic!("{}", "Unknown execution block hash"))
-            .clone();
+            .load(
+                deps.borrow_mut().storage,
+                finalized_header.execution_block_hash.to_string(),
+            )
+            .unwrap_or_else(|_| panic!("{}", "Unknown execution block hash"));
         #[cfg(feature = "logs")]
         env::log_str(
             format!(
                 "Current finalized slot: {}, New finalized slot: {}",
-                self.state.finalized_beacon_header.header.slot, finalized_header.header.slot
+                non_mapped_state.finalized_beacon_header.header.slot, finalized_header.header.slot
             )
             .as_str(),
         );
@@ -231,13 +259,23 @@ impl Contract {
             submitters_update.insert(cursor_header.submitter, num_of_removed_headers + 1);
 
             self.state
+                .mapped
                 .unfinalized_headers
-                .remove(&cursor_header_hash.to_string());
+                .remove(deps.borrow_mut().storage, cursor_header_hash.to_string());
             self.state
+                .mapped
                 .finalized_execution_blocks
-                .insert(cursor_header.block_number, cursor_header_hash);
+                .save(
+                    deps.borrow_mut().storage,
+                    cursor_header.block_number,
+                    &cursor_header_hash,
+                )
+                .unwrap();
 
-            if cursor_header.parent_hash == self.state.finalized_beacon_header.execution_block_hash
+            if cursor_header.parent_hash
+                == non_mapped_state
+                    .finalized_beacon_header
+                    .execution_block_hash
             {
                 break;
             }
@@ -245,9 +283,13 @@ impl Contract {
             cursor_header_hash = cursor_header.parent_hash;
             cursor_header = self
                 .state
+                .mapped
                 .unfinalized_headers
-                .get(&cursor_header.parent_hash.to_string())
-                .unwrap_or_else(|| {
+                .load(
+                    deps.borrow_mut().storage,
+                    cursor_header.parent_hash.to_string(),
+                )
+                .unwrap_or_else(|_| {
                     panic!(
                         "{}",
                         format!(
@@ -259,8 +301,13 @@ impl Contract {
                 })
                 .clone();
         }
-        self.state.finalized_beacon_header = finalized_header;
-        self.state.finalized_execution_header = Some(finalized_execution_header_info.clone());
+        non_mapped_state.finalized_beacon_header = finalized_header;
+        non_mapped_state.finalized_execution_header = Some(finalized_execution_header_info.clone());
+
+        self.state
+            .non_mapped
+            .save(deps.borrow_mut().storage, &non_mapped_state)
+            .unwrap();
 
         for (submitter, num_of_removed_headers) in &submitters_update {
             self.update_submitter(submitter, -(*num_of_removed_headers as i64));
@@ -275,54 +322,79 @@ impl Contract {
             .as_str(),
         );
 
-        if finalized_execution_header_info.block_number > self.state.hashes_gc_threshold {
+        if finalized_execution_header_info.block_number > non_mapped_state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(
-                finalized_execution_header_info.block_number - self.state.hashes_gc_threshold,
+                finalized_execution_header_info.block_number - non_mapped_state.hashes_gc_threshold,
             );
         }
     }
 
     fn commit_light_client_update(&mut self, update: LightClientUpdate) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let mut non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         // Update finalized header
         let finalized_header_update = update.finality_update.header_update;
         let finalized_period =
-            compute_sync_committee_period(self.state.finalized_beacon_header.header.slot);
+            compute_sync_committee_period(non_mapped_state.finalized_beacon_header.header.slot);
         let update_period =
             compute_sync_committee_period(finalized_header_update.beacon_header.slot);
 
         if update_period == finalized_period + 1 {
-            self.state.current_sync_committee =
-                Some(self.state.next_sync_committee.clone().unwrap());
-            self.state.next_sync_committee =
+            non_mapped_state.current_sync_committee =
+                Some(non_mapped_state.next_sync_committee.clone().unwrap());
+            non_mapped_state.next_sync_committee =
                 Some(update.sync_committee_update.unwrap().next_sync_committee);
         }
 
+        self.state
+            .non_mapped
+            .save(deps.borrow_mut().storage, &non_mapped_state)
+            .unwrap();
         self.update_finalized_header(finalized_header_update.into());
     }
 
     /// Remove information about the headers that are at least as old as the given block number.
     fn gc_finalized_execution_blocks(&mut self, mut header_number: u64) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let _non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
         loop {
-            if self
-                .state
+            self.state
+                .mapped
                 .finalized_execution_blocks
-                .remove(&header_number)
-                .is_some()
-            {
-                if header_number == 0 {
-                    break;
-                } else {
-                    header_number -= 1;
-                }
-            } else {
+                .remove(deps.borrow_mut().storage, header_number);
+
+            if header_number == 0 {
                 break;
+            } else {
+                header_number -= 1;
             }
         }
     }
 
-    fn update_submitter(&mut self, submitter: &Addr, value: i64) {
-        let mut num_of_submitted_headers: i64 =
-            *self.state.submitters.get(submitter).unwrap_or_else(|| {
+    fn update_submitter(&self, submitter: &Addr, value: i64) {
+        let deps = self.ctx.get_deps_mut().unwrap();
+        let non_mapped_state = self
+            .state
+            .non_mapped
+            .load(deps.borrow_mut().storage)
+            .unwrap();
+
+        let mut num_of_submitted_headers: i64 = self
+            .state
+            .mapped
+            .submitters
+            .load(deps.borrow_mut().storage, submitter.clone())
+            .unwrap_or_else(|_| {
                 panic!(
                     "{}",
                     "The account can't submit blocks because it is not registered"
@@ -332,18 +404,28 @@ impl Contract {
         num_of_submitted_headers += value;
 
         assert!(
-            num_of_submitted_headers <= self.state.max_submitted_blocks_by_account.into(),
+            num_of_submitted_headers <= non_mapped_state.max_submitted_blocks_by_account.into(),
             "The submitter exhausted the limit of blocks"
         );
 
-        self.state.submitters.insert(
-            submitter.clone(),
-            num_of_submitted_headers.try_into().unwrap(),
-        );
+        let num_of_submitted_headers: u32 = num_of_submitted_headers.try_into().unwrap();
+
+        self.state
+            .mapped
+            .submitters
+            .save(
+                deps.borrow_mut().storage,
+                submitter.clone(),
+                &num_of_submitted_headers,
+            )
+            .unwrap();
     }
 
     fn is_light_client_update_allowed(&self) {
-        if let Some(trusted_signer) = &self.state.trusted_signer {
+        let deps = self.ctx.get_deps().unwrap();
+        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
+
+        if let Some(trusted_signer) = &non_mapped_state.trusted_signer {
             assert!(
                 self.ctx.info.clone().unwrap().sender == *trusted_signer,
                 "Eth-client is deployed as trust mode, only trusted_signer can update the client"

@@ -1,14 +1,13 @@
-use crate::{helpers::TryToBinary};
+use crate::helpers::TryToBinary;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 use cw2::set_contract_version;
 
 use crate::{
-    contract::{Contract, ContractContext},
+    contract::Contract,
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-    state::STATE,
 };
 
 // version info for migration info
@@ -51,15 +50,12 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    let contract = Contract::new_instantiated(
-        ContractContext {
-            env,
-            info: Some(info.clone()),
-        },
-        msg.args,
-    );
+    // TODO put this inside init?
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &contract.state)?;
+
+    let mut contract = Contract::new_mut(env, info.clone(), deps);
+
+    contract.init(msg.args);
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -73,13 +69,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let mut contract = Contract::new(
-        ContractContext {
-            env,
-            info: Some(info),
-        },
-        STATE.load(deps.storage)?,
-    );
+    let mut contract = Contract::new_mut(env, info, deps);
 
     match msg {
         ExecuteMsg::RegisterSubmitter => contract.register_submitter(),
@@ -95,8 +85,6 @@ pub fn execute(
         }
     };
 
-    STATE.save(deps.storage, &contract.state)?;
-
     Ok(Response::new().add_attribute("method", "execute"))
 }
 
@@ -107,10 +95,8 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
-    let contract = Contract::new(
-        ContractContext { env, info: None },
-        STATE.load(deps.storage)?,
-    );
+    let contract = Contract::new(env, deps);
+
     let res = match msg {
         QueryMsg::IsInitialized => true.try_to_binary()?,
         QueryMsg::LastBlockNumber => contract.last_block_number().try_to_binary()?,

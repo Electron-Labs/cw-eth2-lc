@@ -110,7 +110,7 @@ pub type Public = H512;
 pub type Signature = H520;
 
 // Block Header
-#[cw_serde]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct BlockHeader {
     pub parent_hash: H256,
     pub uncles_hash: H256,

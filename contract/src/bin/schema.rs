@@ -1,6 +1,6 @@
-use std::{fs::create_dir_all, env::current_dir};
+use std::{env::current_dir, fs::create_dir_all};
 
-use cosmwasm_schema::{export_schema, schema_for, remove_schemas};
+use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cw_eth2_lc::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {

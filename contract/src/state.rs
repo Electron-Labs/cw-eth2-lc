@@ -1,4 +1,4 @@
-use cw_storage_plus::{IndexedMap, Item, Map};
+use cw_storage_plus::{Item, Map};
 
 use utility::{consensus::Network, types::ExecutionHeaderInfo};
 

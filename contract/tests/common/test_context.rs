@@ -1,8 +1,8 @@
-use std::env;
+
 
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
-    Addr, DepsMut,
+    Addr,
 };
 use cw_eth2_lc::{contract::Contract, Result};
 

@@ -4,7 +4,7 @@ use common::{
     test_context::{get_test_context, submit_and_check_execution_headers, TestContext},
     InitOptions,
 };
-use cosmwasm_std::testing::mock_dependencies;
+
 use cw_eth2_lc::Result;
 use hex::FromHex;
 use tree_hash::TreeHash;

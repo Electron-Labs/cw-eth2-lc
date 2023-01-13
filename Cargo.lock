@@ -434,6 +434,7 @@ dependencies = [
  "lazy_static",
  "merkle_proof",
  "prost 0.11.5",
+ "rlp",
  "serde",
  "serde_json",
  "thiserror",

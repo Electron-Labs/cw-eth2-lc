@@ -47,4 +47,16 @@ pub enum QueryMsg {
     GetMaxSubmittedBlocksByAccount,
     #[returns(Option<Addr>)]
     GetTrustedSigner,
+    #[returns(bool)]
+    VerifyLogEntry(VerifyLogEntryRequest),
+}
+#[cw_serde]
+pub struct VerifyLogEntryRequest {
+    pub log_index: u64,
+    pub log_entry_data: Vec<u8>,
+    pub receipt_index: u64,
+    pub receipt_data: Vec<u8>,
+    pub header_data: Vec<u8>,
+    pub proof: Vec<Vec<u8>>,
+    pub skip_bridge_call: bool,
 }

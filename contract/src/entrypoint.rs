@@ -9,7 +9,6 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO test with all features enabled
 // TODO implement prover contract
 // TODO optimize after reading eth2 light client spec
 // TODO do we want to pause contract?
@@ -117,6 +116,7 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
             .get_max_submitted_blocks_by_account(deps)
             .try_to_binary()?,
         QueryMsg::GetTrustedSigner => contract.get_trusted_signer(deps).try_to_binary()?,
+        QueryMsg::VerifyLogEntry(req) => contract.verify_log_entry(deps, req).try_to_binary()?,
     };
 
     Ok(res)

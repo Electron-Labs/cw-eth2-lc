@@ -1,6 +1,7 @@
 pub mod execute;
 pub mod instantiate;
 pub mod query;
+pub mod prover;
 
 use crate::state::ContractState;
 use bitvec::{order::Lsb0, prelude::BitVec};

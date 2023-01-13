@@ -48,6 +48,7 @@ tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b
 merkle_proof = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
 bls = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec", default-features = false, features = ["milagro"]}
 bitvec = "1.0.0"
+rlp = "0.4.2"
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"

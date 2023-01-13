@@ -75,14 +75,3 @@ pub fn submit_and_check_execution_headers<'a>(
 
     Ok(())
 }
-
-// pub async fn submit_and_check_execution_header<'a>(
-//     contract: &mut Box<dyn ContractInterface + 'a>,
-//     headers: BlockHeader,
-// ) -> Result<()> {
-//     contract.submit_execution_header(header.clone())?;
-//     assert!(contract.is_known_execution_header(header.calculate_hash())?);
-//     assert!(contract.block_hash_safe(header.number)?.is_none());
-
-//     Ok(())
-// }

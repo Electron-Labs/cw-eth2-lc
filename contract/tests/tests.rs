@@ -47,7 +47,7 @@ pub fn test_submit_update_two_periods() -> Result<()> {
     contract.register_submitter()?;
     // After submitting the execution header, it should be present in the execution headers list
     // but absent in canonical chain blocks (not-finalized)
-    submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).collect())?;
+    contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
 
     contract.submit_beacon_chain_light_client_update(updates[1].clone())?;
 
@@ -88,7 +88,7 @@ pub fn test_submit_execution_block_from_fork_chain() -> Result<()> {
     } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
-    submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).collect())?;
+    contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
 
     // Submit execution header with different hash
     let mut fork_header = headers[5].clone();
@@ -142,7 +142,7 @@ pub fn test_gc_headers() -> Result<()> {
     );
 
     contract.register_submitter()?;
-    submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).collect())?;
+    contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
 
     contract.submit_beacon_chain_light_client_update(updates[1].clone())?;
 
@@ -192,7 +192,10 @@ pub fn test_panic_on_exhausted_submit_limit() -> Result<()> {
     );
     contract.register_submitter()?;
 
-    if submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).collect()).is_ok() {
+    if contract
+        .submit_and_check_execution_headers(headers.iter().skip(1).collect())
+        .is_ok()
+    {
         return Err("expected error".into());
     }
 
@@ -217,7 +220,7 @@ pub fn test_max_submit_blocks_by_account_limit() -> Result<()> {
     );
     contract.register_submitter()?;
 
-    submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).take(100).collect())?;
+    contract.submit_and_check_execution_headers(headers.iter().skip(1).take(100).collect())?;
     Ok(())
 }
 
@@ -369,7 +372,7 @@ pub fn test_panic_on_submit_update_with_missing_execution_blocks() -> Result<()>
     } = get_test_context(accounts(0), None);
 
     contract.register_submitter()?;
-    submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).take(5).collect())?;
+    contract.submit_and_check_execution_headers(headers.iter().skip(1).take(5).collect())?;
 
     if contract
         .submit_beacon_chain_light_client_update(updates[1].clone())
@@ -484,7 +487,7 @@ pub fn test_panic_on_submit_blocks_with_unknown_parent() -> Result<()> {
 
 //     contract.register_submitter()?;
 
-//     submit_and_check_execution_headers(&mut contract, headers.iter().skip(1).take(5).collect())?;
+//     contract.submit_and_check_execution_headers( headers.iter().skip(1).take(5).collect())?;
 
 //     contract.unregister_submitter();
 // }

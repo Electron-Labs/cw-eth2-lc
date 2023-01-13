@@ -1,7 +1,5 @@
-use cosmwasm_std::{
-    Addr,
-};
-use cw_eth2_lc::{Result};
+use cosmwasm_std::Addr;
+use cw_eth2_lc::Result;
 
 use types::{
     eth2::{ExtendedBeaconBlockHeader, LightClientState, LightClientUpdate},
@@ -14,6 +12,7 @@ pub trait ContractInterface {
     fn unregister_submitter(&mut self) -> Result<()>;
     fn submit_beacon_chain_light_client_update(&mut self, update: LightClientUpdate) -> Result<()>;
     fn submit_execution_header(&mut self, block_header: BlockHeader) -> Result<()>;
+    fn submit_and_check_execution_headers(&mut self, block_headers: Vec<&BlockHeader>) -> Result<()>;
     fn update_trusted_signer(&mut self, trusted_signer: Option<Addr>) -> Result<()>;
 
     // Query

@@ -10,14 +10,15 @@ use types::{
 };
 
 pub struct ContractState<'a> {
-    pub non_mapped: Item<'a, NonMappedState>,
+    // state that is store in maps
     pub mapped: MappedState<'a>,
+
+    // state that is not stored in maps
+    pub non_mapped: Item<'a, NonMappedState>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct NonMappedState {
-    pub initialized: bool,
-
     /// If set, only light client updates by the trusted signer will be accepted
     pub trusted_signer: Option<Addr>,
     /// Whether the client validates the updates.
@@ -59,7 +60,6 @@ impl ContractState<'_> {
         Self {
             non_mapped: Item::new("non_mapped"),
             mapped: MappedState {
-                // TODO better keys
                 finalized_execution_blocks: Map::new("finalized_execution_blocks"),
                 unfinalized_headers: Map::new("unfinalized_headers"),
                 submitters: Map::new("submitters"),

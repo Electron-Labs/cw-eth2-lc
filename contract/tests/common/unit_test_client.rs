@@ -142,4 +142,21 @@ impl ContractInterface for UnitTestContractImplementation<'_> {
         }))
         .map_err(|_| "contract call panicked unexpectedly".into())
     }
+
+    fn submit_and_check_execution_headers(
+        &mut self,
+        block_headers: Vec<&BlockHeader>,
+    ) -> Result<()> {
+        for header in block_headers {
+            self.submit_execution_header(header.clone())?;
+            if !self.is_known_execution_header(header.calculate_hash())? {
+                return Err("failed to submit execution header".into());
+            }
+            if !self.block_hash_safe(header.number)?.is_none() {
+                return Err("failed to submit execution header".into());
+            }
+        }
+
+        Ok(())
+    }
 }

@@ -19,6 +19,7 @@ use crate::{
 // TODO use indexed map
 // TODO optimised test speed
 
+// TODO add proper responses
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps
 // TODO readme makes no sense
@@ -49,6 +50,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let mut contract = Contract::new(env, Some(info.clone()));
     contract.init(deps, msg.args);
+    
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender))

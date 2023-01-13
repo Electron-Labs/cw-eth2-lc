@@ -1,24 +1,30 @@
-pub mod ctx;
 pub mod execute;
 pub mod instantiate;
 pub mod query;
 
 use std::collections::HashMap;
-
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo};
 use tree_hash::TreeHash;
-
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
     compute_sync_committee_period, convert_branch, validate_beacon_block_header_update,
     FINALITY_TREE_DEPTH, FINALITY_TREE_INDEX, MIN_SYNC_COMMITTEE_PARTICIPANTS,
     SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX,
 };
-
 use crate::state::ContractState;
 
-use self::ctx::ContractContext;
+pub struct ContractContext {
+    pub env: Env,
+    pub info: Option<MessageInfo>,
+}
+
+impl ContractContext {
+    pub fn new(env: Env, info: Option<MessageInfo>) -> Self {
+        Self { env, info }
+    }
+}
+
 
 pub struct Contract<'a> {
     pub ctx: ContractContext,

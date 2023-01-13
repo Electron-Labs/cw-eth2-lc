@@ -331,4 +331,8 @@ impl ContractInterface for IntegrationTestContractImplementation {
     fn get_trusted_signer(&self) -> Result<Option<cosmwasm_std::Addr>> {
         self.query_smart_contract(QueryMsg::GetTrustedSigner)
     }
+
+    fn submit_and_check_execution_headers(&mut self, block_headers: Vec<&types::BlockHeader>) -> Result<()> {
+        todo!()
+    }
 }

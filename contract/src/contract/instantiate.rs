@@ -62,7 +62,6 @@ impl Contract<'_> {
                     finalized_execution_header: Some(finalized_execution_header_info),
                     current_sync_committee: Some(args.current_sync_committee),
                     next_sync_committee: Some(args.next_sync_committee),
-                    initialized: true,
                 },
             )
             .unwrap();

@@ -31,6 +31,7 @@ overflow-checks = true
 backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
+integration = []
 
 [dependencies]
 cosmwasm-schema = "1.1.3"

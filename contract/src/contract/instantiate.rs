@@ -10,8 +10,14 @@ use crate::state::NonMappedState;
 
 use super::Contract;
 
+// version info for migration info
+const CONTRACT_NAME: &str = "crates.io:cw-eth2-cl";
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 impl Contract<'_> {
     pub fn init(&mut self, deps: DepsMut, args: InitInput) {
+        cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
+
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
 

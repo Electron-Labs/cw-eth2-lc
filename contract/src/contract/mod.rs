@@ -2,17 +2,17 @@ pub mod execute;
 pub mod instantiate;
 pub mod query;
 
-use std::collections::HashMap;
+use crate::state::ContractState;
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo};
+use std::collections::HashMap;
 use tree_hash::TreeHash;
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
     compute_sync_committee_period, convert_branch, validate_beacon_block_header_update,
     FINALITY_TREE_DEPTH, FINALITY_TREE_INDEX, MIN_SYNC_COMMITTEE_PARTICIPANTS,
-    SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX,
+    SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX, compute_signing_root, compute_domain, get_participant_pubkeys, NetworkConfig,
 };
-use crate::state::ContractState;
 
 pub struct ContractContext {
     pub env: Env,
@@ -24,7 +24,6 @@ impl ContractContext {
         Self { env, info }
     }
 }
-
 
 pub struct Contract<'a> {
     pub ctx: ContractContext,
@@ -67,9 +66,8 @@ impl Contract<'_> {
             )
         );
 
-        #[cfg(feature = "bls")]
         if non_mapped_state.verify_bls_signatures {
-            non_mapped_state.verify_bls_signatures(update, sync_committee_bits, finalized_period);
+            self.verify_bls_signatures(deps, update, sync_committee_bits, finalized_period);
         }
 
         #[cfg(feature = "logs")]
@@ -159,9 +157,9 @@ impl Contract<'_> {
         }
     }
 
-    #[cfg(feature = "bls")]
     fn verify_bls_signatures(
         &self,
+        deps: Deps,
         update: &LightClientUpdate,
         sync_committee_bits: BitVec<u8>,
         finalized_period: u64,

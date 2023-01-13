@@ -586,7 +586,6 @@ mod mainnet_tests {
     }
 
     #[test]
-    #[cfg_attr(feature = "bls", ignore)]
     // #[should_panic](
     // expected = "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
     // )]

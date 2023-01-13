@@ -3,21 +3,21 @@ use crate::helpers::TryToBinary;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 
-
 use crate::{
     contract::Contract,
     error::ContractError,
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
+// TODO test with all features enabled
+// TODO implement prover contract
 // TODO optimize after reading eth2 light client spec
 // TODO do we want to pause contract?
 // TODO add logs
-// TODO implement prover contract
 // TODO remove all panics
-// TODO test with all features enabled
 // TODO use indexed map
 // TODO optimised test speed for integration tests
+// TODO add mainnet feature
 
 // TODO add proper responses
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
@@ -25,9 +25,7 @@ use crate::{
 // TODO readme makes no sense
 // TODO add docs
 // TODO add gas to test
-// TODO make test e2e
 // TODO add comprehensive errors
-// TODO add tests
 // TODO refactor tests
 // TODO REFACTOR
 // TODO optimize rustfmt.toml
@@ -38,7 +36,6 @@ use crate::{
 // TODO refer existing cosmwasm contracts
 // TODO improve with rust tooling
 // TODO add cosmwasm check to CI
-// TODO use docker for integration test instead of testnet
 // TODO add specific error to tests
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -50,7 +47,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let mut contract = Contract::new(env, Some(info.clone()));
     contract.init(deps, msg.args);
-    
+
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender))

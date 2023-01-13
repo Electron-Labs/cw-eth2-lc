@@ -29,7 +29,7 @@ impl Contract<'_> {
             );
 
             assert!(
-                (cfg!(feature = "bls") && args.verify_bls_signatures)
+                args.verify_bls_signatures
                     || args.trusted_signer.is_some(),
                 "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
             );

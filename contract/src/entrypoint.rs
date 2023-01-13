@@ -9,7 +9,6 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO implement prover contract
 // TODO optimize after reading eth2 light client spec
 // TODO do we want to pause contract?
 // TODO add logs
@@ -18,6 +17,7 @@ use crate::{
 // TODO optimised test speed for integration tests
 // TODO add mainnet feature
 
+// TODO add verify log entry tests
 // TODO add proper responses
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps

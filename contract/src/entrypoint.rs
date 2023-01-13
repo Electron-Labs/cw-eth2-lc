@@ -17,7 +17,7 @@ use crate::{
 // TODO remove all panics
 // TODO test with all features enabled
 // TODO use indexed map
-// TODO optimised test speed
+// TODO optimised test speed for integration tests
 
 // TODO add proper responses
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it

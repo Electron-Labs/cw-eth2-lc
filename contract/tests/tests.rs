@@ -1,7 +1,7 @@
 use bitvec::{bitarr, order::Lsb0};
 use common::{
     accounts, read_beacon_header,
-    test_context::{get_test_context, submit_and_check_execution_headers, TestContext},
+    test_context::{get_test_context, TestContext},
     InitOptions,
 };
 

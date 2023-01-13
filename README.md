@@ -1,11 +1,21 @@
-# cosmwasm-eth2-lc
+# cw-eth2-lc
 
+### Tests
 
-## Dockerized
+#### Unit tests
 
-We provide a docker image to help with test setups. There are two modes to use it
+```
+cargo test -- --nocapture
+```
 
-Build: `docker build -t cosmwasm/wasmd:latest .`  or pull from dockerhub
+#### E2E tests
+
+To run e2e tests you need to run the dev server as described in the "Dev server" section before running the following command.
+
+```
+cargo test --features integration -- --nocapture --test-threads 1
+```
+
 
 ### Dev server
 

@@ -152,7 +152,7 @@ impl ContractInterface for UnitTestContractImplementation<'_> {
             if !self.is_known_execution_header(header.calculate_hash())? {
                 return Err("failed to submit execution header".into());
             }
-            if !self.block_hash_safe(header.number)?.is_none() {
+            if self.block_hash_safe(header.number)?.is_some() {
                 return Err("failed to submit execution header".into());
             }
         }

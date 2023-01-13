@@ -84,7 +84,7 @@ impl CustomCosmosClient {
         })
     }
 
-    fn broadcast_tx<M: Msg>(&mut self, msg: M) -> Result<TxResponse> {
+    fn broadcast_tx_with_mode<M: Msg>(&mut self, msgs: Vec<M>, mode: i32) -> Result<TxResponse> {
         let acc_resp = self
             .auth_query_client
             .account(QueryAccountRequest {
@@ -115,7 +115,12 @@ impl CustomCosmosClient {
         let timeout_height = latest_block_height as u16 + 20;
         let memo = "cw-eth2-lc test";
 
-        let tx_body = tx::Body::new(vec![msg.to_any()?], memo, timeout_height);
+        let mut serialized_msgs = vec![];
+        for msg in &msgs {
+            serialized_msgs.push(msg.to_any()?)
+        }
+
+        let tx_body = tx::Body::new(serialized_msgs, memo, timeout_height);
 
         let signer_info =
             SignerInfo::single_direct(Some(self.caller_priv_key.public_key()), sequence_number);
@@ -127,14 +132,14 @@ impl CustomCosmosClient {
 
         let res = self
             .tx_client
-            .broadcast_tx(BroadcastTxRequest { tx_bytes, mode: 1 })
+            .broadcast_tx(BroadcastTxRequest { tx_bytes, mode })
             .wait(&self.rt)?
             .get_ref()
             .clone()
             .tx_response
             .unwrap();
 
-        let type_url = msg.to_any().unwrap().type_url;
+        let type_url = msgs.first().unwrap().to_any().unwrap().type_url;
 
         if res.code != 0 {
             return Err(
@@ -145,6 +150,10 @@ impl CustomCosmosClient {
         println!("transaction success - {type_url}");
 
         Ok(res)
+    }
+
+    fn broadcast_tx<M: Msg>(&mut self, msg: M) -> Result<TxResponse> {
+        self.broadcast_tx_with_mode(vec![msg], 1)
     }
 
     fn broadcast_tx_with_resp<M: Msg, R: Msg>(&mut self, msg: M) -> Result<R> {
@@ -332,7 +341,45 @@ impl ContractInterface for IntegrationTestContractImplementation {
         self.query_smart_contract(QueryMsg::GetTrustedSigner)
     }
 
-    fn submit_and_check_execution_headers(&mut self, block_headers: Vec<&types::BlockHeader>) -> Result<()> {
-        todo!()
+    fn submit_and_check_execution_headers(
+        &mut self,
+        block_headers: Vec<&types::BlockHeader>,
+    ) -> Result<()> {
+        let mut msgs = Vec::new();
+        for header in &block_headers {
+            let msg = MsgExecuteContract {
+                sender: self.client.caller_address.clone(),
+                contract: self.contract_addr.clone(),
+                msg: serde_json::ser::to_vec(&ExecuteMsg::SubmitExecutionHeader(
+                    header.clone().clone(),
+                ))?,
+                funds: Vec::new(),
+            };
+            msgs.push(msg);
+        }
+
+        let chunk_size = 250;
+        let msgs_chunks: Vec<&[MsgExecuteContract]> = msgs.chunks(chunk_size).collect();
+        println!("submitting {} execution headers", msgs.len());
+        for i in 0..msgs_chunks.len() {
+            println!(
+                "sending chunk {} of {} with chunk size {}",
+                i + 1,
+                msgs_chunks.len(),
+                chunk_size
+            );
+            self.client
+                .broadcast_tx_with_mode(msgs_chunks[i].to_vec(), 1)?;
+        }
+
+        for header in block_headers {
+            if !self.is_known_execution_header(header.calculate_hash())? {
+                return Err("failed to submit execution header".into());
+            }
+            if self.block_hash_safe(header.number)?.is_some() {
+                return Err("failed to submit execution header".into());
+            }
+        }
+        Ok(())
     }
 }

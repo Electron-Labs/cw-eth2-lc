@@ -570,34 +570,36 @@ mod mainnet_tests {
     use super::*;
 
     #[test]
-    // #[should_panic](
-    // expected = "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
-    // )]
+    #[should_panic]
     pub fn test_panic_on_init_in_trustless_mode_without_bls_on_mainnet() -> Result<()> {
-        let (_headers, _updates, init_input) = get_test_data(Some(InitOptions {
-            validate_updates: true,
-            verify_bls_signatures: false,
-            hashes_gc_threshold: 500,
-            max_submitted_blocks_by_account: 7000,
-            trusted_signer: None,
-        }));
+        let (_headers, _updates, init_input) = get_test_context(
+            accounts(0),
+            Some(InitOptions {
+                validate_updates: true,
+                verify_bls_signatures: false,
+                hashes_gc_threshold: 500,
+                max_submitted_blocks_by_account: 7000,
+                trusted_signer: None,
+            }),
+        );
 
-        Contract::init(init_input);
+        Ok(())
     }
 
     #[test]
-    // #[should_panic](
-    // expected = "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
-    // )]
+    #[should_panic]
     pub fn test_panic_on_init_in_trustless_mode_without_bls_feature_flag() -> Result<()> {
-        let (_headers, _updates, init_input) = get_test_data(Some(InitOptions {
-            validate_updates: true,
-            verify_bls_signatures: true,
-            hashes_gc_threshold: 500,
-            max_submitted_blocks_by_account: 7000,
-            trusted_signer: None,
-        }));
+        let (_headers, _updates, init_input) = get_test_context(
+            accounts(0),
+            Some(InitOptions {
+                validate_updates: true,
+                verify_bls_signatures: true,
+                hashes_gc_threshold: 500,
+                max_submitted_blocks_by_account: 7000,
+                trusted_signer: None,
+            }),
+        );
 
-        Contract::init(init_input);
+        Ok(())
     }
 }

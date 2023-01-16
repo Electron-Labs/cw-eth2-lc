@@ -37,7 +37,7 @@ pub fn get_test_context<'a>(
 }
 
 #[cfg(not(feature = "integration"))]
-pub fn get_test_contract<'a>(
+fn get_test_contract<'a>(
     contract_caller: Addr,
     init_input: InitInput,
 ) -> Box<dyn ContractInterface + 'a> {
@@ -54,7 +54,7 @@ pub fn get_test_contract<'a>(
 }
 
 #[cfg(feature = "integration")]
-pub fn get_test_contract<'a>(
+fn get_test_contract<'a>(
     contract_caller: Addr,
     init_input: InitInput,
 ) -> Box<dyn ContractInterface + 'a> {

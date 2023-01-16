@@ -9,16 +9,18 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO optimize after reading eth2 light client spec
 // TODO do we want to pause contract?
 // TODO add logs
-// TODO remove all panics
 // TODO use indexed map
-// TODO optimised test speed for integration tests
-// TODO add mainnet feature
-
+// TODO probably dont need to register submitters since we dont have to pay for storage in cosmwasm
 // TODO add verify log entry tests
 // TODO add proper responses
+// TODO use standardized directory structure
+
+// TODO optimize after reading eth2 light client spec
+// TODO remove all panics
+// TODO optimised test speed for integration tests
+
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps
 // TODO readme makes no sense
@@ -27,15 +29,14 @@ use crate::{
 // TODO add comprehensive errors
 // TODO refactor tests
 // TODO REFACTOR
-// TODO optimize rustfmt.toml
-// TODO use standardized directory structure
 // TODO add cicd
 // TODO move todos to github issues
-// TODO improve with awesome-cosmwasm
 // TODO refer existing cosmwasm contracts
 // TODO improve with rust tooling
 // TODO add cosmwasm check to CI
 // TODO add specific error to tests
+// TODO look for improvements with awesome-cosmwasm
+// TODO optimize rustfmt.toml
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

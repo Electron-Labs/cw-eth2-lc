@@ -9,6 +9,11 @@ use types::{
     H256,
 };
 
+const NON_MAPPED_STATE_KEY: &str = "non_mapped";
+const FINALIZED_EXECUTION_BLOCKS_STATE_KEY: &str = "finalized_execution_blocks";
+const UNFINALIZED_HEADERS_STATE_KEY: &str = "unfinalized_headers";
+const SUBMITTERS_STATE_KEY: &str = "submitters";
+
 pub struct ContractState<'a> {
     // state that is store in maps
     pub mapped: MappedState<'a>,
@@ -58,11 +63,11 @@ pub struct MappedState<'a> {
 impl ContractState<'_> {
     pub fn new() -> Self {
         Self {
-            non_mapped: Item::new("non_mapped"),
+            non_mapped: Item::new(NON_MAPPED_STATE_KEY),
             mapped: MappedState {
-                finalized_execution_blocks: Map::new("finalized_execution_blocks"),
-                unfinalized_headers: Map::new("unfinalized_headers"),
-                submitters: Map::new("submitters"),
+                finalized_execution_blocks: Map::new(FINALIZED_EXECUTION_BLOCKS_STATE_KEY),
+                unfinalized_headers: Map::new(UNFINALIZED_HEADERS_STATE_KEY),
+                submitters: Map::new(SUBMITTERS_STATE_KEY),
             },
         }
     }

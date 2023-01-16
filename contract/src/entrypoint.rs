@@ -11,15 +11,14 @@ use crate::{
 
 // TODO do we want to pause contract?
 // TODO use indexed map
-// TODO probably dont need to register submitters since we dont have to pay for storage in cosmwasm
 // TODO add verify log entry tests
-// TODO add proper responses
 // TODO use standardized directory structure
 
 // TODO optimize after reading eth2 light client spec
 // TODO remove all panics
 // TODO optimised test speed for integration tests
 
+// TODO uncomment tests
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps
 // TODO readme makes no sense
@@ -45,12 +44,15 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let mut contract = Contract::new(env, Some(info.clone()));
-    contract.init(deps, msg.0);
+    contract.init(deps, msg.0.clone());
 
     Ok(contract
-        .response_with_logs(Response::new())
-        .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender))
+        .response_with_logs(
+            Response::new()
+                .add_attribute("method", "instantiate")
+                .add_attribute("instantiater", info.sender),
+        )
+        .add_attribute("instantiate_options", msg.0.try_to_binary()?.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -60,23 +62,25 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    let contract = Contract::new(env, Some(info));
+    let contract = Contract::new(env, Some(info.clone()));
+    let mut resp = Response::new().add_attribute("method", "execute");
 
     match msg {
         ExecuteMsg::SubmitBeaconChainLightClientUpdate(light_client_update) => {
+            resp = resp.add_attribute("execute_method", "submit_beacon_chain_light_client_update");
             contract.submit_beacon_chain_light_client_update(deps, light_client_update)
         }
         ExecuteMsg::SubmitExecutionHeader(block_header) => {
+            resp = resp.add_attribute("execute_method", "submit_execution_header");
             contract.submit_execution_header(deps, block_header)
         }
         ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
+            resp = resp.add_attribute("execute_method", "update_trusted_signer");
             contract.update_trusted_signer(deps, trusted_signer)
         }
     };
 
-    Ok(contract
-        .response_with_logs(Response::new())
-        .add_attribute("method", "execute"))
+    Ok(contract.response_with_logs(resp.add_attribute("caller", info.sender)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

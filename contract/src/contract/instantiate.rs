@@ -57,7 +57,6 @@ impl Contract<'_> {
                     verify_bls_signatures: args.verify_bls_signatures,
                     hashes_gc_threshold: args.hashes_gc_threshold,
                     network,
-                    max_submitted_blocks_by_account: args.max_submitted_blocks_by_account,
                     finalized_beacon_header: args.finalized_beacon_header,
                     finalized_execution_header: Some(finalized_execution_header_info),
                     current_sync_committee: Some(args.current_sync_committee),

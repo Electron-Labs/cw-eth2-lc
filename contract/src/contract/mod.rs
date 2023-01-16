@@ -5,8 +5,8 @@ pub mod query;
 
 use crate::state::ContractState;
 use bitvec::{order::Lsb0, prelude::BitVec};
-use cosmwasm_std::{Addr, Attribute, Deps, DepsMut, Env, MessageInfo, Response};
-use std::{cell::RefCell, collections::HashMap};
+use cosmwasm_std::{Attribute, Deps, DepsMut, Env, MessageInfo, Response};
+use std::{cell::RefCell};
 use tree_hash::TreeHash;
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
@@ -232,7 +232,7 @@ impl Contract<'_> {
 
     fn update_finalized_header(
         &self,
-        mut deps: DepsMut,
+        deps: DepsMut,
         finalized_header: ExtendedBeaconBlockHeader,
     ) {
         let mut non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
@@ -258,13 +258,7 @@ impl Contract<'_> {
         let mut cursor_header = finalized_execution_header_info.clone();
         let mut cursor_header_hash = finalized_header.execution_block_hash;
 
-        let mut submitters_update: HashMap<Addr, u32> = HashMap::new();
         loop {
-            let num_of_removed_headers = *submitters_update
-                .get(&cursor_header.submitter)
-                .unwrap_or(&0);
-            submitters_update.insert(cursor_header.submitter, num_of_removed_headers + 1);
-
             self.state
                 .mapped
                 .unfinalized_headers
@@ -313,10 +307,6 @@ impl Contract<'_> {
             .save(deps.storage, &non_mapped_state)
             .unwrap();
 
-        for (submitter, num_of_removed_headers) in &submitters_update {
-            self.update_submitter(&mut deps, submitter, -(*num_of_removed_headers as i64));
-        }
-
         if finalized_execution_header_info.block_number > non_mapped_state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(
                 deps,
@@ -363,37 +353,6 @@ impl Contract<'_> {
                 header_number -= 1;
             }
         }
-    }
-
-    fn update_submitter(&self, deps: &mut DepsMut, submitter: &Addr, value: i64) {
-        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-
-        let mut num_of_submitted_headers: i64 = self
-            .state
-            .mapped
-            .submitters
-            .load(deps.storage, submitter.clone())
-            .unwrap_or_else(|_| {
-                panic!(
-                    "{}",
-                    "The account can't submit blocks because it is not registered"
-                )
-            }) as i64;
-
-        num_of_submitted_headers += value;
-
-        assert!(
-            num_of_submitted_headers <= non_mapped_state.max_submitted_blocks_by_account.into(),
-            "The submitter exhausted the limit of blocks"
-        );
-
-        let num_of_submitted_headers: u32 = num_of_submitted_headers.try_into().unwrap();
-
-        self.state
-            .mapped
-            .submitters
-            .save(deps.storage, submitter.clone(), &num_of_submitted_headers)
-            .unwrap();
     }
 
     fn is_light_client_update_allowed(&self, deps: Deps) {

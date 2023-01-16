@@ -7,14 +7,10 @@ use types::{
 use utility::types::InitInput;
 
 #[cw_serde]
-pub struct InstantiateMsg {
-    pub args: InitInput,
-}
+pub struct InstantiateMsg(pub InitInput);
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    RegisterSubmitter,
-    UnRegisterSubmitter,
     SubmitBeaconChainLightClientUpdate(LightClientUpdate),
     SubmitExecutionHeader(BlockHeader),
     UpdateTrustedSigner { trusted_signer: Option<Addr> },
@@ -23,8 +19,6 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(bool)]
-    IsInitialized,
     #[returns(u64)]
     LastBlockNumber,
     #[returns(Option<H256>)]
@@ -39,12 +33,6 @@ pub enum QueryMsg {
     FinalizedBeaconBlockHeader,
     #[returns(LightClientState)]
     GetLightClientState,
-    #[returns(bool)]
-    IsSubmitterRegistered { addr: Addr },
-    #[returns(u32)]
-    GetNumOfSubmittedBlocksByAccount { addr: Addr },
-    #[returns(u32)]
-    GetMaxSubmittedBlocksByAccount,
     #[returns(Option<Addr>)]
     GetTrustedSigner,
     #[returns(bool)]

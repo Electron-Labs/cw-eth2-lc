@@ -12,7 +12,6 @@ use types::{
 const NON_MAPPED_STATE_KEY: &str = "non_mapped";
 const FINALIZED_EXECUTION_BLOCKS_STATE_KEY: &str = "finalized_execution_blocks";
 const UNFINALIZED_HEADERS_STATE_KEY: &str = "unfinalized_headers";
-const SUBMITTERS_STATE_KEY: &str = "submitters";
 
 pub struct ContractState<'a> {
     // state that is store in maps
@@ -38,11 +37,6 @@ pub struct NonMappedState {
     pub hashes_gc_threshold: u64,
     /// Network. e.g. mainnet, kiln
     pub network: Network,
-    /// Hashes of the finalized execution blocks mapped to their numbers. Stores up to `hashes_gc_threshold` entries.
-    /// Execution block number -> execution block hash
-    /// Max number of unfinalized blocks allowed to be stored by one submitter account
-    /// This value should be at least 32 blocks (1 epoch), but the recommended value is 1024 (32 epochs)
-    pub max_submitted_blocks_by_account: u32,
     /// Light client state
     pub finalized_beacon_header: ExtendedBeaconBlockHeader,
     pub finalized_execution_header: Option<ExecutionHeaderInfo>,
@@ -55,9 +49,6 @@ pub struct MappedState<'a> {
     /// All unfinalized execution blocks' headers hashes mapped to their `HeaderInfo`.
     /// Execution block hash -> ExecutionHeaderInfo object
     pub unfinalized_headers: Map<'a, String, ExecutionHeaderInfo>,
-    /// `Addr`s mapped to their number of submitted headers.
-    /// Submitter account -> Num of submitted headers
-    pub submitters: Map<'a, Addr, u32>,
 }
 
 impl ContractState<'_> {
@@ -67,7 +58,6 @@ impl ContractState<'_> {
             mapped: MappedState {
                 finalized_execution_blocks: Map::new(FINALIZED_EXECUTION_BLOCKS_STATE_KEY),
                 unfinalized_headers: Map::new(UNFINALIZED_HEADERS_STATE_KEY),
-                submitters: Map::new(SUBMITTERS_STATE_KEY),
             },
         }
     }

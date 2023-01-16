@@ -186,7 +186,7 @@ impl IntegrationTestContractImplementation {
             admin: None,
             code_id: res.code_id,
             label: Some("test label".to_string()),
-            msg: serde_json::ser::to_vec(&InstantiateMsg { args })?,
+            msg: serde_json::ser::to_vec(&InstantiateMsg(args))?,
             funds: Vec::new(),
         };
         let res: MsgInstantiateContractResponse = client.broadcast_tx_with_resp(msg)?;
@@ -234,30 +234,6 @@ fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
 }
 
 impl ContractInterface for IntegrationTestContractImplementation {
-    fn register_submitter(&mut self) -> Result<()> {
-        let msg = MsgExecuteContract {
-            sender: self.client.caller_address.clone(),
-            contract: self.contract_addr.clone(),
-            msg: serde_json::ser::to_vec(&ExecuteMsg::RegisterSubmitter)?,
-            funds: Vec::new(),
-        };
-        self.client.broadcast_tx(msg)?;
-
-        Ok(())
-    }
-
-    fn unregister_submitter(&mut self) -> Result<()> {
-        let msg = MsgExecuteContract {
-            sender: self.client.caller_address.clone(),
-            contract: self.contract_addr.clone(),
-            msg: serde_json::ser::to_vec(&ExecuteMsg::UnRegisterSubmitter)?,
-            funds: Vec::new(),
-        };
-        self.client.broadcast_tx(msg)?;
-
-        Ok(())
-    }
-
     fn submit_beacon_chain_light_client_update(
         &mut self,
         update: types::eth2::LightClientUpdate,
@@ -323,18 +299,6 @@ impl ContractInterface for IntegrationTestContractImplementation {
 
     fn get_light_client_state(&self) -> Result<types::eth2::LightClientState> {
         self.query_smart_contract(QueryMsg::GetLightClientState)
-    }
-
-    fn is_submitter_registered(&self, addr: cosmwasm_std::Addr) -> Result<bool> {
-        self.query_smart_contract(QueryMsg::IsSubmitterRegistered { addr })
-    }
-
-    fn get_num_of_submitted_blocks_by_account(&self, addr: cosmwasm_std::Addr) -> Result<u32> {
-        self.query_smart_contract(QueryMsg::GetNumOfSubmittedBlocksByAccount { addr })
-    }
-
-    fn get_max_submitted_blocks_by_account(&self) -> Result<u32> {
-        self.query_smart_contract(QueryMsg::GetMaxSubmittedBlocksByAccount)
     }
 
     fn get_trusted_signer(&self) -> Result<Option<cosmwasm_std::Addr>> {

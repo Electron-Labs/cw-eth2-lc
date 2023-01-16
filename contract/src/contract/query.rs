@@ -67,24 +67,6 @@ impl Contract<'_> {
         }
     }
 
-    pub fn is_submitter_registered(&self, deps: Deps, addr: Addr) -> bool {
-        self.state.mapped.submitters.has(deps.storage, addr)
-    }
-
-    pub fn get_num_of_submitted_blocks_by_account(&self, deps: Deps, addr: Addr) -> u32 {
-        self.state
-            .mapped
-            .submitters
-            .load(deps.storage, addr)
-            .unwrap_or_else(|_| panic!("{}", "The account is not registered"))
-    }
-
-    pub fn get_max_submitted_blocks_by_account(&self, deps: Deps) -> u32 {
-        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-
-        non_mapped_state.max_submitted_blocks_by_account
-    }
-
     pub fn get_trusted_signer(&self, deps: Deps) -> Option<Addr> {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 

@@ -25,20 +25,6 @@ impl<'a> UnitTestContractImplementation<'a> {
 }
 
 impl ContractInterface for UnitTestContractImplementation<'_> {
-    fn register_submitter(&mut self) -> Result<()> {
-        catch_unwind(AssertUnwindSafe(|| {
-            self.inner.register_submitter(self.deps.as_mut())
-        }))
-        .map_err(|_| "contract call panicked unexpectedly".into())
-    }
-
-    fn unregister_submitter(&mut self) -> Result<()> {
-        catch_unwind(AssertUnwindSafe(|| {
-            self.inner.unregister_submitter(self.deps.as_mut())
-        }))
-        .map_err(|_| "contract call panicked unexpectedly".into())
-    }
-
     fn submit_beacon_chain_light_client_update(&mut self, update: LightClientUpdate) -> Result<()> {
         catch_unwind(AssertUnwindSafe(|| {
             self.inner
@@ -109,29 +95,6 @@ impl ContractInterface for UnitTestContractImplementation<'_> {
     fn get_light_client_state(&self) -> Result<LightClientState> {
         catch_unwind(AssertUnwindSafe(|| {
             self.inner.get_light_client_state(self.deps.as_ref())
-        }))
-        .map_err(|_| "contract call panicked unexpectedly".into())
-    }
-
-    fn is_submitter_registered(&self, addr: Addr) -> Result<bool> {
-        catch_unwind(AssertUnwindSafe(|| {
-            self.inner.is_submitter_registered(self.deps.as_ref(), addr)
-        }))
-        .map_err(|_| "contract call panicked unexpectedly".into())
-    }
-
-    fn get_num_of_submitted_blocks_by_account(&self, addr: Addr) -> Result<u32> {
-        catch_unwind(AssertUnwindSafe(|| {
-            self.inner
-                .get_num_of_submitted_blocks_by_account(self.deps.as_ref(), addr)
-        }))
-        .map_err(|_| "contract call panicked unexpectedly".into())
-    }
-
-    fn get_max_submitted_blocks_by_account(&self) -> Result<u32> {
-        catch_unwind(AssertUnwindSafe(|| {
-            self.inner
-                .get_max_submitted_blocks_by_account(self.deps.as_ref())
         }))
         .map_err(|_| "contract call panicked unexpectedly".into())
     }

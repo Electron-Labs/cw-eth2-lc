@@ -45,7 +45,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let mut contract = Contract::new(env, Some(info.clone()));
-    contract.init(deps, msg.args);
+    contract.init(deps, msg.0);
 
     Ok(contract
         .response_with_logs(Response::new())
@@ -63,8 +63,6 @@ pub fn execute(
     let contract = Contract::new(env, Some(info));
 
     match msg {
-        ExecuteMsg::RegisterSubmitter => contract.register_submitter(deps),
-        ExecuteMsg::UnRegisterSubmitter => contract.unregister_submitter(deps),
         ExecuteMsg::SubmitBeaconChainLightClientUpdate(light_client_update) => {
             contract.submit_beacon_chain_light_client_update(deps, light_client_update)
         }
@@ -91,7 +89,6 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
     let contract = Contract::new(env, None);
 
     let res = match msg {
-        QueryMsg::IsInitialized => true.try_to_binary()?,
         QueryMsg::LastBlockNumber => contract.last_block_number(deps).try_to_binary()?,
         QueryMsg::BlockHashSafe { block_number } => contract
             .block_hash_safe(deps, block_number)
@@ -109,15 +106,6 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
             .finalized_beacon_block_header(deps)
             .try_to_binary()?,
         QueryMsg::GetLightClientState => contract.get_light_client_state(deps).try_to_binary()?,
-        QueryMsg::IsSubmitterRegistered { addr } => contract
-            .is_submitter_registered(deps, addr)
-            .try_to_binary()?,
-        QueryMsg::GetNumOfSubmittedBlocksByAccount { addr } => contract
-            .get_num_of_submitted_blocks_by_account(deps, addr)
-            .try_to_binary()?,
-        QueryMsg::GetMaxSubmittedBlocksByAccount => contract
-            .get_max_submitted_blocks_by_account(deps)
-            .try_to_binary()?,
         QueryMsg::GetTrustedSigner => contract.get_trusted_signer(deps).try_to_binary()?,
         QueryMsg::VerifyLogEntry(req) => contract.verify_log_entry(deps, req).try_to_binary()?,
     };

@@ -44,7 +44,6 @@ pub struct InitOptions {
     pub validate_updates: bool,
     pub verify_bls_signatures: bool,
     pub hashes_gc_threshold: u64,
-    pub max_submitted_blocks_by_account: u32,
     pub trusted_signer: Option<Addr>,
 }
 
@@ -71,7 +70,6 @@ pub fn get_kiln_test_data(
         validate_updates: true,
         verify_bls_signatures: true,
         hashes_gc_threshold: 51000,
-        max_submitted_blocks_by_account: 7000,
         trusted_signer: None,
     });
 
@@ -95,7 +93,6 @@ pub fn get_kiln_test_data(
         validate_updates: init_options.validate_updates,
         verify_bls_signatures: init_options.verify_bls_signatures,
         hashes_gc_threshold: init_options.hashes_gc_threshold,
-        max_submitted_blocks_by_account: init_options.max_submitted_blocks_by_account,
         trusted_signer: init_options.trusted_signer,
     };
 

@@ -44,7 +44,6 @@ pub fn test_submit_update_two_periods() -> Result<()> {
         updates,
     } = get_test_context(accounts(0), None);
 
-    contract.register_submitter()?;
     // After submitting the execution header, it should be present in the execution headers list
     // but absent in canonical chain blocks (not-finalized)
     contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
@@ -74,8 +73,6 @@ pub fn test_submit_update_two_periods() -> Result<()> {
             .execution_block_hash
     )?);
 
-    contract.unregister_submitter()?;
-
     Ok(())
 }
 
@@ -87,7 +84,6 @@ pub fn test_submit_execution_block_from_fork_chain() -> Result<()> {
         updates,
     } = get_test_context(accounts(0), None);
 
-    contract.register_submitter()?;
     contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
 
     // Submit execution header with different hash
@@ -136,12 +132,10 @@ pub fn test_gc_headers() -> Result<()> {
             validate_updates: true,
             verify_bls_signatures: true,
             hashes_gc_threshold: 500,
-            max_submitted_blocks_by_account: 7000,
             trusted_signer: None,
         }),
     );
 
-    contract.register_submitter()?;
     contract.submit_and_check_execution_headers(headers.iter().skip(1).collect())?;
 
     contract.submit_beacon_chain_light_client_update(updates[1].clone())?;
@@ -174,35 +168,6 @@ pub fn test_gc_headers() -> Result<()> {
 }
 
 #[test]
-// #[should_panic](expected = "exhausted the limit of blocks")]
-pub fn test_panic_on_exhausted_submit_limit() -> Result<()> {
-    let TestContext {
-        mut contract,
-        headers,
-        updates: _,
-    } = get_test_context(
-        accounts(0),
-        Some(InitOptions {
-            validate_updates: true,
-            verify_bls_signatures: true,
-            hashes_gc_threshold: 7100,
-            max_submitted_blocks_by_account: 100,
-            trusted_signer: None,
-        }),
-    );
-    contract.register_submitter()?;
-
-    if contract
-        .submit_and_check_execution_headers(headers.iter().skip(1).collect())
-        .is_ok()
-    {
-        return Err("expected error".into());
-    }
-
-    Ok(())
-}
-
-#[test]
 pub fn test_max_submit_blocks_by_account_limit() -> Result<()> {
     let TestContext {
         mut contract,
@@ -214,11 +179,9 @@ pub fn test_max_submit_blocks_by_account_limit() -> Result<()> {
             validate_updates: true,
             verify_bls_signatures: true,
             hashes_gc_threshold: 7100,
-            max_submitted_blocks_by_account: 100,
             trusted_signer: None,
         }),
     );
-    contract.register_submitter()?;
 
     contract.submit_and_check_execution_headers(headers.iter().skip(1).take(100).collect())?;
     Ok(())
@@ -238,7 +201,6 @@ pub fn test_trusted_signer() -> Result<()> {
             validate_updates: true,
             verify_bls_signatures: true,
             hashes_gc_threshold: 7100,
-            max_submitted_blocks_by_account: 100,
             trusted_signer: Some(trusted_signer),
         }),
     );
@@ -371,7 +333,6 @@ pub fn test_panic_on_submit_update_with_missing_execution_blocks() -> Result<()>
         updates,
     } = get_test_context(accounts(0), None);
 
-    contract.register_submitter()?;
     contract.submit_and_check_execution_headers(headers.iter().skip(1).take(5).collect())?;
 
     if contract
@@ -393,26 +354,7 @@ pub fn test_panic_on_submit_same_execution_blocks() -> Result<()> {
         updates: _,
     } = get_test_context(accounts(0), None);
 
-    contract.register_submitter()?;
     contract.submit_execution_header(headers[1].clone())?;
-    if contract.submit_execution_header(headers[1].clone()).is_ok() {
-        return Err("expected error".into());
-    }
-
-    Ok(())
-}
-
-#[test]
-// #[should_panic](expected = "can't submit blocks because it is not registered")]
-pub fn test_panic_on_submit_execution_block_after_submitter_unregistered() -> Result<()> {
-    let TestContext {
-        mut contract,
-        headers,
-        updates: _,
-    } = get_test_context(accounts(0), None);
-
-    contract.register_submitter()?;
-    contract.unregister_submitter()?;
     if contract.submit_execution_header(headers[1].clone()).is_ok() {
         return Err("expected error".into());
     }
@@ -463,47 +405,10 @@ pub fn test_panic_on_submit_blocks_with_unknown_parent() -> Result<()> {
     } = get_test_context(accounts(0), None);
 
     assert_eq!(contract.last_block_number()?, headers[0].number);
-    contract.register_submitter()?;
 
     contract.submit_execution_header(headers[1].clone())?;
     // Skip 2th block
     if contract.submit_execution_header(headers[3].clone()).is_ok() {
-        return Err("expected error".into());
-    }
-
-    Ok(())
-}
-
-// #[test]
-// // #[should_panic](expected = "Can't unregister the account with used storage")]
-// pub fn test_panic_on_unregister_submitter() ->Result<()>  {
-//     let TestContext {
-//         mut contract,
-//         headers,
-//         updates: _,
-//     } = get_test_context(accounts(0), None);
-
-//     assert_eq!(contract.last_block_number()?, headers[0].number);
-
-//     contract.register_submitter()?;
-
-//     contract.submit_and_check_execution_headers( headers.iter().skip(1).take(5).collect())?;
-
-//     contract.unregister_submitter();
-// }
-
-#[test]
-// #[should_panic](expected = "can't submit blocks because it is not registered")]
-pub fn test_panic_on_skipping_register_submitter() -> Result<()> {
-    let TestContext {
-        mut contract,
-        headers,
-        updates: _,
-    } = get_test_context(accounts(0), None);
-
-    assert_eq!(contract.last_block_number()?, headers[0].number);
-
-    if contract.submit_execution_header(headers[1].clone()).is_ok() {
         return Err("expected error".into());
     }
 
@@ -578,7 +483,6 @@ mod mainnet_tests {
                 validate_updates: true,
                 verify_bls_signatures: false,
                 hashes_gc_threshold: 500,
-                max_submitted_blocks_by_account: 7000,
                 trusted_signer: None,
             }),
         );
@@ -595,7 +499,6 @@ mod mainnet_tests {
                 validate_updates: true,
                 verify_bls_signatures: true,
                 hashes_gc_threshold: 500,
-                max_submitted_blocks_by_account: 7000,
                 trusted_signer: None,
             }),
         );

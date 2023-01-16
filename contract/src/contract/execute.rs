@@ -76,8 +76,7 @@ impl Contract<'_> {
         let submitter = self.ctx.info.clone().unwrap().sender;
         self.update_submitter(&mut deps, &submitter, 1);
         let block_hash = block_header.calculate_hash();
-        #[cfg(feature = "logs")]
-        env::log_str(
+        self.log_str(
             format!(
                 "Submitted header number {}, hash {:?}",
                 block_header.number, block_hash
@@ -92,7 +91,8 @@ impl Contract<'_> {
         };
 
         assert!(
-            !self.state
+            !self
+                .state
                 .mapped
                 .unfinalized_headers
                 .has(deps.storage, block_hash.to_string()),

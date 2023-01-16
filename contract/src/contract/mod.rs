@@ -1,18 +1,19 @@
 pub mod execute;
 pub mod instantiate;
-pub mod query;
 pub mod prover;
+pub mod query;
 
 use crate::state::ContractState;
 use bitvec::{order::Lsb0, prelude::BitVec};
-use cosmwasm_std::{Addr, Deps, DepsMut, Env, MessageInfo};
-use std::collections::HashMap;
+use cosmwasm_std::{Addr, Attribute, Deps, DepsMut, Env, MessageInfo, Response};
+use std::{cell::RefCell, collections::HashMap};
 use tree_hash::TreeHash;
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
-    compute_sync_committee_period, convert_branch, validate_beacon_block_header_update,
+    compute_domain, compute_signing_root, compute_sync_committee_period, convert_branch,
+    get_participant_pubkeys, validate_beacon_block_header_update, NetworkConfig,
     FINALITY_TREE_DEPTH, FINALITY_TREE_INDEX, MIN_SYNC_COMMITTEE_PARTICIPANTS,
-    SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX, compute_signing_root, compute_domain, get_participant_pubkeys, NetworkConfig,
+    SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX,
 };
 
 pub struct ContractContext {
@@ -29,6 +30,7 @@ impl ContractContext {
 pub struct Contract<'a> {
     pub ctx: ContractContext,
     pub state: ContractState<'a>,
+    logs: RefCell<Vec<String>>,
 }
 
 impl Contract<'_> {
@@ -36,14 +38,25 @@ impl Contract<'_> {
         Self {
             ctx: ContractContext::new(env, info),
             state: ContractState::new(),
+            logs: RefCell::new(vec![]),
         }
+    }
+
+    fn log_str(&self, log: &str) {
+        self.logs.borrow_mut().push(log.to_string())
+    }
+
+    // attach logs to instruction response
+    pub fn response_with_logs(&self, mut res: Response) -> Response {
+        for log in self.logs.borrow().iter() {
+            res.attributes.push(Attribute::new("log", log));
+        }
+
+        res
     }
 
     fn validate_light_client_update(&self, deps: Deps, update: &LightClientUpdate) {
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-
-        #[cfg(feature = "logs")]
-        env::log_str(format!("Validate update. Used gas: {}", env::used_gas().0).as_str());
 
         let finalized_period =
             compute_sync_committee_period(non_mapped_state.finalized_beacon_header.header.slot);
@@ -70,9 +83,6 @@ impl Contract<'_> {
         if non_mapped_state.verify_bls_signatures {
             self.verify_bls_signatures(deps, update, sync_committee_bits, finalized_period);
         }
-
-        #[cfg(feature = "logs")]
-        env::log_str(format!("Finish validate update. Used gas: {}", env::used_gas().0).as_str());
     }
 
     fn verify_finality_branch(
@@ -227,8 +237,6 @@ impl Contract<'_> {
     ) {
         let mut non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
-        #[cfg(feature = "logs")]
-        env::log_str(format!("Update finalized header. Used gas: {}", env::used_gas().0).as_str());
         let finalized_execution_header_info = self
             .state
             .mapped
@@ -238,8 +246,8 @@ impl Contract<'_> {
                 finalized_header.execution_block_hash.to_string(),
             )
             .unwrap_or_else(|_| panic!("{}", "Unknown execution block hash"));
-        #[cfg(feature = "logs")]
-        env::log_str(
+
+        self.log_str(
             format!(
                 "Current finalized slot: {}, New finalized slot: {}",
                 non_mapped_state.finalized_beacon_header.header.slot, finalized_header.header.slot
@@ -308,15 +316,6 @@ impl Contract<'_> {
         for (submitter, num_of_removed_headers) in &submitters_update {
             self.update_submitter(&mut deps, submitter, -(*num_of_removed_headers as i64));
         }
-
-        #[cfg(feature = "logs")]
-        env::log_str(
-            format!(
-                "Finish update finalized header. Used gas: {}",
-                env::used_gas().0
-            )
-            .as_str(),
-        );
 
         if finalized_execution_header_info.block_number > non_mapped_state.hashes_gc_threshold {
             self.gc_finalized_execution_blocks(

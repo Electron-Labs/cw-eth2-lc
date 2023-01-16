@@ -10,7 +10,6 @@ use crate::{
 };
 
 // TODO do we want to pause contract?
-// TODO add logs
 // TODO use indexed map
 // TODO probably dont need to register submitters since we dont have to pay for storage in cosmwasm
 // TODO add verify log entry tests
@@ -48,7 +47,8 @@ pub fn instantiate(
     let mut contract = Contract::new(env, Some(info.clone()));
     contract.init(deps, msg.args);
 
-    Ok(Response::new()
+    Ok(contract
+        .response_with_logs(Response::new())
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender))
 }
@@ -76,7 +76,9 @@ pub fn execute(
         }
     };
 
-    Ok(Response::new().add_attribute("method", "execute"))
+    Ok(contract
+        .response_with_logs(Response::new())
+        .add_attribute("method", "execute"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

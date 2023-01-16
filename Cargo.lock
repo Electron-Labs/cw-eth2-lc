@@ -677,6 +677,7 @@ name = "eth2_hashing"
 version = "0.3.0"
 dependencies = [
  "lazy_static",
+ "rustc-hex",
  "sha2 0.10.6",
 ]
 

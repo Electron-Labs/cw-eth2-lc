@@ -18,6 +18,7 @@ use crate::{
 // TODO remove all panics
 // TODO optimised test speed for e2e tests
 
+// review cargo xtasks
 // TODO uncomment tests
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps

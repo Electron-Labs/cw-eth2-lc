@@ -1,11 +1,8 @@
 [workspace]
 members = [
-    "contract",
-    "utility",
-    "types",
-    "serde_utils",
+    "crates/*",
 ]
 
 [patch]
 [patch.crates-io]
-eth2_hashing = { path = "hashing" }
+eth2_hashing = { path = "crates/hashing" }

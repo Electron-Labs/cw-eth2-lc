@@ -3,13 +3,6 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
-      "type": "string",
-      "enum": [
-        "register_submitter",
-        "un_register_submitter"
-      ]
-    },
-    {
       "type": "object",
       "required": [
         "submit_beacon_chain_light_client_update"
@@ -189,8 +182,7 @@
         "uncles_hash": {
           "$ref": "#/definitions/Array_of_uint8"
         }
-      },
-      "additionalProperties": false
+      }
     },
     "FinalizedHeaderUpdate": {
       "type": "object",

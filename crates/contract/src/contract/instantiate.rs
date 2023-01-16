@@ -6,7 +6,7 @@ use utility::{
     types::{ExecutionHeaderInfo, InitInput},
 };
 
-use crate::state::NonMappedState;
+use crate::{contract::admin_controlled::Mask, state::NonMappedState};
 
 use super::Contract;
 
@@ -52,6 +52,8 @@ impl Contract<'_> {
             .save(
                 deps.storage,
                 &NonMappedState {
+                    admin: finalized_execution_header_info.submitter.clone(),
+                    paused: Mask::default(),
                     trusted_signer: args.trusted_signer,
                     validate_updates: args.validate_updates,
                     verify_bls_signatures: args.verify_bls_signatures,

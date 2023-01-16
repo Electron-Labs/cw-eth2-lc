@@ -1,4 +1,4 @@
-use crate::helpers::TryToBinary;
+use crate::{contract::admin_controlled::AdminControlled, helpers::TryToBinary};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
@@ -9,16 +9,15 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO add admin controlled pause feature
 // TODO use indexed map
 // TODO add verify log entry tests
-// TODO use standardized directory structure
 
 // TODO optimize after reading eth2 light client spec
 // TODO remove all panics
 // TODO optimised test speed for e2e tests
 
-// review cargo xtasks
+// TODO review cargo xtasks
+// TODO review deps.api object
 // TODO uncomment tests
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps
@@ -79,6 +78,10 @@ pub fn execute(
             resp = resp.add_attribute("execute_method", "update_trusted_signer");
             contract.update_trusted_signer(deps, trusted_signer)
         }
+        ExecuteMsg::SetPaused(mask) => {
+            resp = resp.add_attribute("execute_method", "set_paused");
+            contract.set_paused(deps, mask);
+        }
     };
 
     Ok(contract.response_with_logs(resp.add_attribute("caller", info.sender)))
@@ -113,6 +116,7 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
         QueryMsg::GetLightClientState => contract.get_light_client_state(deps).try_to_binary()?,
         QueryMsg::GetTrustedSigner => contract.get_trusted_signer(deps).try_to_binary()?,
         QueryMsg::VerifyLogEntry(req) => contract.verify_log_entry(deps, req).try_to_binary()?,
+        QueryMsg::GetPaused => contract.get_paused(deps).try_to_binary()?,
     };
 
     Ok(res)

@@ -6,6 +6,8 @@ use types::{
 };
 use utility::types::InitInput;
 
+use crate::contract::admin_controlled::Mask;
+
 #[cw_serde]
 pub struct InstantiateMsg(pub InitInput);
 
@@ -14,6 +16,7 @@ pub enum ExecuteMsg {
     SubmitBeaconChainLightClientUpdate(LightClientUpdate),
     SubmitExecutionHeader(BlockHeader),
     UpdateTrustedSigner { trusted_signer: Option<Addr> },
+    SetPaused(Mask),
 }
 
 #[cw_serde]
@@ -37,6 +40,8 @@ pub enum QueryMsg {
     GetTrustedSigner,
     #[returns(bool)]
     VerifyLogEntry(VerifyLogEntryRequest),
+    #[returns(Mask)]
+    GetPaused,
 }
 #[cw_serde]
 pub struct VerifyLogEntryRequest {

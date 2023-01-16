@@ -5,7 +5,7 @@ use test_utils::{
     InitOptions,
 };
 
-use cw_eth2_lc::Result;
+use cw_eth2_lc::{Result};
 use hex::FromHex;
 use tree_hash::TreeHash;
 use types::{H256, U256};
@@ -363,7 +363,6 @@ pub fn test_panic_on_submit_same_execution_blocks() -> Result<()> {
 }
 
 // #[test]
-// // #[should_panic](expected = "paused")]
 // pub fn test_panic_on_submit_update_paused() ->Result<()>  {
 //     let TestContext {
 //         mut contract,

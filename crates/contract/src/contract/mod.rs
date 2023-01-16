@@ -1,3 +1,4 @@
+pub mod admin_controlled;
 pub mod execute;
 pub mod instantiate;
 pub mod prover;
@@ -6,7 +7,7 @@ pub mod query;
 use crate::state::ContractState;
 use bitvec::{order::Lsb0, prelude::BitVec};
 use cosmwasm_std::{Attribute, Deps, DepsMut, Env, MessageInfo, Response};
-use std::{cell::RefCell};
+use std::cell::RefCell;
 use tree_hash::TreeHash;
 use types::eth2::{ExtendedBeaconBlockHeader, LightClientUpdate};
 use utility::consensus::{
@@ -15,6 +16,8 @@ use utility::consensus::{
     FINALITY_TREE_DEPTH, FINALITY_TREE_INDEX, MIN_SYNC_COMMITTEE_PARTICIPANTS,
     SYNC_COMMITTEE_TREE_DEPTH, SYNC_COMMITTEE_TREE_INDEX,
 };
+
+use self::admin_controlled::{AdminControlled, PAUSE_SUBMIT_UPDATE};
 
 pub struct ContractContext {
     pub env: Env,
@@ -230,11 +233,7 @@ impl Contract<'_> {
         );
     }
 
-    fn update_finalized_header(
-        &self,
-        deps: DepsMut,
-        finalized_header: ExtendedBeaconBlockHeader,
-    ) {
+    fn update_finalized_header(&self, deps: DepsMut, finalized_header: ExtendedBeaconBlockHeader) {
         let mut non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         let finalized_execution_header_info = self
@@ -356,6 +355,7 @@ impl Contract<'_> {
     }
 
     fn is_light_client_update_allowed(&self, deps: Deps) {
+        self.check_not_paused(PAUSE_SUBMIT_UPDATE, deps);
         let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
 
         if let Some(trusted_signer) = &non_mapped_state.trusted_signer {

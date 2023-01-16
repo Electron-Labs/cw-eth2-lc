@@ -1,13 +1,12 @@
-use cw_storage_plus::{Item, Map};
-
-use utility::{consensus::Network, types::ExecutionHeaderInfo};
-
+use crate::contract::admin_controlled::Mask;
 use cosmwasm_std::Addr;
+use cw_storage_plus::{Item, Map};
 use serde::{Deserialize, Serialize};
 use types::{
     eth2::{ExtendedBeaconBlockHeader, SyncCommittee},
     H256,
 };
+use utility::{consensus::Network, types::ExecutionHeaderInfo};
 
 const NON_MAPPED_STATE_KEY: &str = "non_mapped";
 const FINALIZED_EXECUTION_BLOCKS_STATE_KEY: &str = "finalized_execution_blocks";
@@ -23,6 +22,8 @@ pub struct ContractState<'a> {
 
 #[derive(Serialize, Deserialize)]
 pub struct NonMappedState {
+    pub admin: Addr,
+    pub paused: Mask,
     /// If set, only light client updates by the trusted signer will be accepted
     pub trusted_signer: Option<Addr>,
     /// Whether the client validates the updates.

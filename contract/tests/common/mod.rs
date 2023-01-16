@@ -4,7 +4,7 @@ use types::{eth2::*, BlockHeader};
 use utility::types::InitInput;
 pub mod contract_interface;
 pub mod test_context;
-pub mod integration_test_client;
+pub mod e2e_test_client;
 pub mod unit_test_client;
 
 pub fn read_beacon_header(filename: String) -> BeaconBlockHeader {

@@ -43,7 +43,7 @@ pub const MNEMONIC: &str = "come fury another excite blue obtain throw rhythm en
 pub const ENDPOINT: &str = "http://localhost:9090/";
 pub const ADDR_PREFIX: &str = "wasm";
 
-pub struct IntegrationTestContractImplementation {
+pub struct E2ETestContractImplementation {
     contract_addr: AccountId,
     client: CustomCosmosClient,
 }
@@ -170,7 +170,7 @@ impl CustomCosmosClient {
     }
 }
 
-impl IntegrationTestContractImplementation {
+impl E2ETestContractImplementation {
     pub fn new(args: InitInput) -> Result<Self> {
         let mut client = CustomCosmosClient::new()?;
 
@@ -233,7 +233,7 @@ fn get_file_as_byte_vec(filename: &str) -> Vec<u8> {
     buffer
 }
 
-impl ContractInterface for IntegrationTestContractImplementation {
+impl ContractInterface for E2ETestContractImplementation {
     fn submit_beacon_chain_light_client_update(
         &mut self,
         update: types::eth2::LightClientUpdate,

@@ -9,9 +9,9 @@ use utility::types::InitInput;
 
 use super::{contract_interface::ContractInterface, get_test_data, InitOptions};
 
-#[cfg(feature = "integration")]
-use crate::common::integration_test_client::IntegrationTestContractImplementation;
-#[cfg(not(feature = "integration"))]
+#[cfg(feature = "e2e")]
+use crate::common::e2e_test_client::E2ETestContractImplementation;
+#[cfg(not(feature = "e2e"))]
 use crate::common::unit_test_client::UnitTestContractImplementation;
 
 pub struct TestContext<'a, 'b> {
@@ -36,7 +36,7 @@ pub fn get_test_context<'a>(
     }
 }
 
-#[cfg(not(feature = "integration"))]
+#[cfg(not(feature = "e2e"))]
 fn get_test_contract<'a>(
     contract_caller: Addr,
     init_input: InitInput,
@@ -53,12 +53,12 @@ fn get_test_contract<'a>(
     Box::new(contract) as Box<dyn ContractInterface + 'a>
 }
 
-#[cfg(feature = "integration")]
+#[cfg(feature = "e2e")]
 fn get_test_contract<'a>(
     contract_caller: Addr,
     init_input: InitInput,
 ) -> Box<dyn ContractInterface + 'a> {
-    let contract = Box::new(IntegrationTestContractImplementation::new(init_input).unwrap())
+    let contract = Box::new(E2ETestContractImplementation::new(init_input).unwrap())
         as Box<dyn ContractInterface + 'a>;
     contract
 }

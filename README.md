@@ -13,7 +13,7 @@ cargo test -- --nocapture
 To run e2e tests you need to run the [dev server](#dev-server) before running the following command.
 
 ```
-cargo test --features integration -- --nocapture --test-threads 1
+cargo test --features e2e -- --nocapture --test-threads 1
 ```
 
 

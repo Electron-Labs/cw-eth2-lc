@@ -9,14 +9,14 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO do we want to pause contract?
+// TODO add admin controlled pause feature
 // TODO use indexed map
 // TODO add verify log entry tests
 // TODO use standardized directory structure
 
 // TODO optimize after reading eth2 light client spec
 // TODO remove all panics
-// TODO optimised test speed for integration tests
+// TODO optimised test speed for e2e tests
 
 // TODO uncomment tests
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
@@ -50,7 +50,7 @@ pub fn instantiate(
         .response_with_logs(
             Response::new()
                 .add_attribute("method", "instantiate")
-                .add_attribute("instantiater", info.sender),
+                .add_attribute("caller", info.sender),
         )
         .add_attribute("instantiate_options", msg.0.try_to_binary()?.to_string()))
 }

@@ -10,9 +10,9 @@ use utility::types::InitInput;
 use super::{contract_interface::ContractInterface, get_test_data, InitOptions};
 
 #[cfg(feature = "e2e")]
-use crate::common::e2e_test_client::E2ETestContractImplementation;
+use crate::test_utils::e2e_test_client::E2ETestContractImplementation;
 #[cfg(not(feature = "e2e"))]
-use crate::common::unit_test_client::UnitTestContractImplementation;
+use crate::test_utils::unit_test_client::UnitTestContractImplementation;
 
 pub struct TestContext<'a, 'b> {
     pub contract: Box<dyn ContractInterface + 'b>,

@@ -1,5 +1,5 @@
 use bitvec::{bitarr, order::Lsb0};
-use common::{
+use test_utils::{
     accounts, read_beacon_header,
     test_context::{get_test_context, TestContext},
     InitOptions,
@@ -11,7 +11,7 @@ use tree_hash::TreeHash;
 use types::{H256, U256};
 use utility::consensus::*;
 
-pub mod common;
+pub mod test_utils;
 
 #[test]
 pub fn test_header_root() -> Result<()> {

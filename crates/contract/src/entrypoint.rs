@@ -9,13 +9,8 @@ use crate::{
     msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 };
 
-// TODO use indexed map
-// TODO add verify log entry tests
-
 // TODO optimize after reading eth2 light client spec
-// TODO remove all panics
 // TODO optimised test speed for e2e tests
-
 // TODO review cargo xtasks
 // TODO review deps.api object
 // TODO uncomment tests
@@ -23,16 +18,10 @@ use crate::{
 // TODO remove uneeded features and deps
 // TODO readme makes no sense
 // TODO add docs
-// TODO add gas to test
-// TODO add comprehensive errors
-// TODO refactor tests
+// TODO add gas estimation to  e2etest
 // TODO REFACTOR
-// TODO add cicd
-// TODO move todos to github issues
 // TODO refer existing cosmwasm contracts
 // TODO improve with rust tooling
-// TODO add cosmwasm check to CI
-// TODO add specific error to tests
 // TODO look for improvements with awesome-cosmwasm
 // TODO optimize rustfmt.toml
 

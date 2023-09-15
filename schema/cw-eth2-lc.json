@@ -1,0 +1,488 @@
+{
+  "contract_name": "cw-eth2-lc",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "required": [
+      "init_input"
+    ],
+    "properties": {
+      "init_input": {
+        "$ref": "#/definitions/InitInput"
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
+      "InitInput": {
+        "type": "object",
+        "required": [
+          "admin",
+          "execution_state_root",
+          "head_slot",
+          "header_root",
+          "network",
+          "sync_committee_poseidon_hash",
+          "vkey_lc_update_string",
+          "vkey_sc_update_string"
+        ],
+        "properties": {
+          "admin": {
+            "$ref": "#/definitions/Addr"
+          },
+          "execution_state_root": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "head_slot": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "header_root": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "network": {
+            "type": "string"
+          },
+          "sync_committee_poseidon_hash": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "vkey_lc_update_string": {
+            "type": "string"
+          },
+          "vkey_sc_update_string": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "update_light_client"
+        ],
+        "properties": {
+          "update_light_client": {
+            "type": "object",
+            "required": [
+              "light_client_update"
+            ],
+            "properties": {
+              "light_client_update": {
+                "$ref": "#/definitions/LightClientUpdate"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "LightClientUpdate": {
+        "type": "object",
+        "required": [
+          "attested_slot",
+          "execution_state_root",
+          "finalized_header_root",
+          "finalized_slot",
+          "lc_update_proof",
+          "participation"
+        ],
+        "properties": {
+          "attested_slot": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "execution_state_root": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "finalized_header_root": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "finalized_slot": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "lc_update_proof": {
+            "type": "string"
+          },
+          "next_sync_committee": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/NextSyncCommittee"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "participation": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      },
+      "NextSyncCommittee": {
+        "type": "object",
+        "required": [
+          "sc_update_proof",
+          "sync_committee_poseidon_hash",
+          "sync_committee_ssz"
+        ],
+        "properties": {
+          "sc_update_proof": {
+            "type": "string"
+          },
+          "sync_committee_poseidon_hash": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "sync_committee_ssz": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "head"
+        ],
+        "properties": {
+          "head": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "header_root"
+        ],
+        "properties": {
+          "header_root": {
+            "type": "object",
+            "required": [
+              "slot"
+            ],
+            "properties": {
+              "slot": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "execution_state_root"
+        ],
+        "properties": {
+          "execution_state_root": {
+            "type": "object",
+            "required": [
+              "slot"
+            ],
+            "properties": {
+              "slot": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sync_committee_poseidon_hash"
+        ],
+        "properties": {
+          "sync_committee_poseidon_hash": {
+            "type": "object",
+            "required": [
+              "period"
+            ],
+            "properties": {
+              "period": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "verify_log_entry"
+        ],
+        "properties": {
+          "verify_log_entry": {
+            "type": "object",
+            "required": [
+              "verify_log_entry_request"
+            ],
+            "properties": {
+              "verify_log_entry_request": {
+                "$ref": "#/definitions/VerifyLogEntryRequest"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "VerifyLogEntryRequest": {
+        "type": "object",
+        "required": [
+          "log_entry_data",
+          "log_index",
+          "proof",
+          "receipt_data",
+          "receipt_index",
+          "receipts_root",
+          "receipts_root_proof",
+          "skip_bridge_call",
+          "src_slot",
+          "tx_slot"
+        ],
+        "properties": {
+          "log_entry_data": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "log_index": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "proof": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              }
+            }
+          },
+          "receipt_data": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "receipt_index": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "receipts_root": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          "receipts_root_proof": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              }
+            }
+          },
+          "skip_bridge_call": {
+            "type": "boolean"
+          },
+          "src_slot": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "tx_slot": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "execution_state_root": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExecutionStateRootResponse",
+      "type": "object",
+      "properties": {
+        "execution_state_root": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "head": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HeadResponse",
+      "type": "object",
+      "required": [
+        "head"
+      ],
+      "properties": {
+        "head": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "header_root": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HeaderRootResponse",
+      "type": "object",
+      "properties": {
+        "header_root": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "sync_committee_poseidon_hash": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SyncCommitteePoseidonHashResponse",
+      "type": "object",
+      "properties": {
+        "sync_committee_poseidon_hash": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "verify_log_entry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VerifyLogEntryResponse",
+      "type": "object",
+      "required": [
+        "verified"
+      ],
+      "properties": {
+        "verified": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

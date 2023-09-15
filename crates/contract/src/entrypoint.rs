@@ -1,19 +1,14 @@
-use crate::{contract::admin_controlled::AdminControlled, helpers::TryToBinary};
+use crate::contract::Contract;
+use crate::error::ContractError;
+use crate::helpers::TryToBinary;
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 
-use crate::{
-    contract::Contract,
-    error::ContractError,
-    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
-};
-
 // TODO optimize after reading eth2 light client spec
-// TODO optimised test speed for e2e tests
 // TODO review cargo xtasks
 // TODO review deps.api object
-// TODO uncomment tests
 // TODO quoted_int could cause errors deserialize_str test data - somethine somewhere is trying to serialize with serde_json we need to find and remove it
 // TODO remove uneeded features and deps
 // TODO readme makes no sense
@@ -33,7 +28,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let mut contract = Contract::new(env, Some(info.clone()));
-    contract.init(deps, msg.0.clone());
+    contract.init(deps, msg.init_input.clone());
 
     Ok(contract
         .response_with_logs(
@@ -41,7 +36,10 @@ pub fn instantiate(
                 .add_attribute("method", "instantiate")
                 .add_attribute("caller", info.sender),
         )
-        .add_attribute("instantiate_options", msg.0.try_to_binary()?.to_string()))
+        .add_attribute(
+            "instantiate_options",
+            msg.init_input.try_to_binary()?.to_string(),
+        ))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -55,21 +53,11 @@ pub fn execute(
     let mut resp = Response::new().add_attribute("method", "execute");
 
     match msg {
-        ExecuteMsg::SubmitBeaconChainLightClientUpdate(light_client_update) => {
-            resp = resp.add_attribute("execute_method", "submit_beacon_chain_light_client_update");
-            contract.submit_beacon_chain_light_client_update(deps, light_client_update)
-        }
-        ExecuteMsg::SubmitExecutionHeader(block_header) => {
-            resp = resp.add_attribute("execute_method", "submit_execution_header");
-            contract.submit_execution_header(deps, block_header)
-        }
-        ExecuteMsg::UpdateTrustedSigner { trusted_signer } => {
-            resp = resp.add_attribute("execute_method", "update_trusted_signer");
-            contract.update_trusted_signer(deps, trusted_signer)
-        }
-        ExecuteMsg::SetPaused(mask) => {
-            resp = resp.add_attribute("execute_method", "set_paused");
-            contract.set_paused(deps, mask);
+        ExecuteMsg::UpdateLightClient {
+            light_client_update,
+        } => {
+            resp = resp.add_attribute("execute_method", "update_light_client");
+            contract.update_light_client(deps, light_client_update)
         }
     };
 
@@ -86,26 +74,19 @@ pub fn try_query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, Contract
     let contract = Contract::new(env, None);
 
     let res = match msg {
-        QueryMsg::LastBlockNumber => contract.last_block_number(deps).try_to_binary()?,
-        QueryMsg::BlockHashSafe { block_number } => contract
-            .block_hash_safe(deps, block_number)
-            .try_to_binary()?,
-        QueryMsg::IsKnownExecutionHeader { hash } => contract
-            .is_known_execution_header(deps, hash)
-            .try_to_binary()?,
-        QueryMsg::FinalizedBeaconBlockRoot => {
-            contract.finalized_beacon_block_root(deps).try_to_binary()?
+        QueryMsg::Head {} => contract.head(deps).try_to_binary()?,
+        QueryMsg::HeaderRoot { slot } => contract.header_root(deps, slot).try_to_binary()?,
+        QueryMsg::ExecutionStateRoot { slot } => {
+            contract.execution_state_root(deps, slot).try_to_binary()?
         }
-        QueryMsg::FinalizedBeaconBlockSlot => {
-            contract.finalized_beacon_block_slot(deps).try_to_binary()?
-        }
-        QueryMsg::FinalizedBeaconBlockHeader => contract
-            .finalized_beacon_block_header(deps)
+        QueryMsg::SyncCommitteePoseidonHash { period } => contract
+            .sync_committee_poseidon_hash(deps, period)
             .try_to_binary()?,
-        QueryMsg::GetLightClientState => contract.get_light_client_state(deps).try_to_binary()?,
-        QueryMsg::GetTrustedSigner => contract.get_trusted_signer(deps).try_to_binary()?,
-        QueryMsg::VerifyLogEntry(req) => contract.verify_log_entry(deps, req).try_to_binary()?,
-        QueryMsg::GetPaused => contract.get_paused(deps).try_to_binary()?,
+        QueryMsg::VerifyLogEntry {
+            verify_log_entry_request,
+        } => contract
+            .verify_log_entry(deps, verify_log_entry_request)
+            .try_to_binary()?,
     };
 
     Ok(res)

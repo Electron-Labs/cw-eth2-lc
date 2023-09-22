@@ -1,16 +1,14 @@
-use crate::contract::admin_controlled::Mask;
+use crate::eth_utility::Network;
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use serde::{Deserialize, Serialize};
-use types::{
-    eth2::{ExtendedBeaconBlockHeader, SyncCommittee},
-    H256,
-};
-use utility::{consensus::Network, types::ExecutionHeaderInfo};
+
+use electron_rs::verifier::near::PreparedVerifyingKey;
 
 const NON_MAPPED_STATE_KEY: &str = "non_mapped";
-const FINALIZED_EXECUTION_BLOCKS_STATE_KEY: &str = "finalized_execution_blocks";
-const UNFINALIZED_HEADERS_STATE_KEY: &str = "unfinalized_headers";
+const HEADER_ROOTS: &str = "header_roots";
+const EXECUTION_STATE_ROOTS: &str = "execution_state_roots";
+const SYNC_COMMITTEE_POSEIDON_HASHES: &str = "sync_committee_poseidon_hashes";
 
 pub struct ContractState<'a> {
     // state that is store in maps
@@ -23,42 +21,34 @@ pub struct ContractState<'a> {
 #[derive(Serialize, Deserialize)]
 pub struct NonMappedState {
     pub admin: Addr,
-    pub paused: Mask,
-    /// If set, only light client updates by the trusted signer will be accepted
-    pub trusted_signer: Option<Addr>,
-    /// Whether the client validates the updates.
-    /// Should only be set to `false` for debugging, testing, and diagnostic purposes
-    pub validate_updates: bool,
-    /// Whether the client verifies BLS signatures.
-    pub verify_bls_signatures: bool,
-    /// We store the hashes of the blocks for the past `hashes_gc_threshold` headers.
-    /// Events that happen past this threshold cannot be verified by the client.
-    /// It is desirable that this number is larger than 7 days' worth of headers, which is roughly
-    /// 51k Ethereum blocks. So this number should be 51k in production.
-    pub hashes_gc_threshold: u64,
-    /// Network. e.g. mainnet, kiln
+    /// Network. e.g. mainnet, goerli,
     pub network: Network,
-    /// Light client state
-    pub finalized_beacon_header: ExtendedBeaconBlockHeader,
-    pub finalized_execution_header: Option<ExecutionHeaderInfo>,
-    pub current_sync_committee: Option<SyncCommittee>,
-    pub next_sync_committee: Option<SyncCommittee>,
+    /// Latest head slot
+    pub head_slot: u64,
+    /// lc_update circuit verification key
+    pub vkey_lc_update: PreparedVerifyingKey,
+    /// sc_update circuit verification key
+    pub vkey_sc_update: PreparedVerifyingKey,
 }
 
 pub struct MappedState<'a> {
-    pub finalized_execution_blocks: Map<'a, u64, H256>,
-    /// All unfinalized execution blocks' headers hashes mapped to their `HeaderInfo`.
-    /// Execution block hash -> ExecutionHeaderInfo object
-    pub unfinalized_headers: Map<'a, String, ExecutionHeaderInfo>,
+    /// Beacon block header roots  mapped to slot numbers
+    pub header_roots: Map<'a, u64, Vec<u8>>,
+    /// Execution state roots mapped to slot numbers
+    pub execution_state_roots: Map<'a, u64, Vec<u8>>,
+    /// Sync committee public keys poseidon hash mapped to period
+    pub sync_committee_poseidon_hashes: Map<'a, u64, Vec<u8>>,
 }
 
+#[allow(clippy::new_without_default)]
 impl ContractState<'_> {
     pub fn new() -> Self {
         Self {
             non_mapped: Item::new(NON_MAPPED_STATE_KEY),
             mapped: MappedState {
-                finalized_execution_blocks: Map::new(FINALIZED_EXECUTION_BLOCKS_STATE_KEY),
-                unfinalized_headers: Map::new(UNFINALIZED_HEADERS_STATE_KEY),
+                header_roots: Map::new(HEADER_ROOTS),
+                execution_state_roots: Map::new(EXECUTION_STATE_ROOTS),
+                sync_committee_poseidon_hashes: Map::new(SYNC_COMMITTEE_POSEIDON_HASHES),
             },
         }
     }

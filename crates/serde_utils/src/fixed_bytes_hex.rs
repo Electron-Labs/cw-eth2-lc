@@ -3,7 +3,8 @@
 //! E.g., `[0, 1, 2, 3]` serializes as `"0x00010203"`.
 
 use crate::hex::PrefixedHexVisitor;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::de::Error;
+use serde::{Deserializer, Serializer};
 
 macro_rules! bytes_hex {
     ($num_bytes: tt) => {

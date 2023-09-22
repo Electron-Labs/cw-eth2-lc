@@ -1,4 +1,3 @@
-
 use derive_more::{
     Add, AddAssign, Display, Div, DivAssign, From, Into, Mul, MulAssign, Rem, RemAssign, Sub,
     SubAssign,
@@ -13,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 
 #[cfg(feature = "eth2")]
-use tree_hash::{Hash256, TreeHash, TreeHashType};
+use tree_hash::{PackedEncoding, TreeHash, TreeHashType};
 
 #[cfg(feature = "eth2")]
 pub mod eth2;
@@ -34,15 +33,15 @@ impl TreeHash for H256 {
         TreeHashType::Vector
     }
 
-    fn tree_hash_packed_encoding(&self) -> Vec<u8> {
-        self.0.as_bytes().to_vec()
+    fn tree_hash_packed_encoding(&self) -> PackedEncoding {
+        PackedEncoding::from_slice(self.0.as_bytes())
     }
 
     fn tree_hash_packing_factor() -> usize {
         1
     }
 
-    fn tree_hash_root(&self) -> Hash256 {
+    fn tree_hash_root(&self) -> tree_hash::Hash256 {
         self.0
     }
 }
@@ -133,112 +132,27 @@ pub struct BlockHeader {
     pub extra_data: Vec<u8>,
     pub mix_hash: H256,
     pub nonce: H64,
-    #[cfg(feature = "eip1559")]
     #[cfg_attr(all(feature = "eth2"), schemars(schema_with = "crate::string_schema"))]
-    #[cfg_attr(all(feature = "eth2"), serde(with = "eth2_serde_utils::u64_hex_be"))]
-    pub base_fee_per_gas: u64,
+    #[cfg_attr(all(feature = "eth2"), serde(deserialize_with = "u64_hex_be_option"))]
+    pub base_fee_per_gas: Option<u64>,
+    pub withdrawals_root: Option<H256>,
 
     pub hash: Option<H256>,
     pub partial_hash: Option<H256>,
+}
+
+#[cfg(all(feature = "eth2"))]
+fn u64_hex_be_option<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Some(eth2_serde_utils::u64_hex_be::deserialize(
+        deserializer,
+    )?))
 }
 
 pub fn string_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
     String::json_schema(gen)
-}
-
-pub struct BlockHeaderLondon {
-    pub parent_hash: H256,
-    pub uncles_hash: H256,
-    pub author: Address,
-    pub state_root: H256,
-    pub transactions_root: H256,
-    pub receipts_root: H256,
-    pub log_bloom: Bloom,
-    pub difficulty: U256,
-    pub number: u64,
-    pub gas_limit: U256,
-    pub gas_used: U256,
-    pub timestamp: u64,
-    pub extra_data: Vec<u8>,
-    pub mix_hash: H256,
-    pub nonce: H64,
-    pub base_fee_per_gas: u64,
-
-    pub hash: Option<H256>,
-    pub partial_hash: Option<H256>,
-}
-
-impl From<BlockHeaderLondon> for BlockHeader {
-    fn from(header: BlockHeaderLondon) -> Self {
-        Self {
-            parent_hash: header.parent_hash,
-            uncles_hash: header.uncles_hash,
-            author: header.author,
-            state_root: header.state_root,
-            transactions_root: header.transactions_root,
-            receipts_root: header.receipts_root,
-            log_bloom: header.log_bloom,
-            difficulty: header.difficulty,
-            number: header.number,
-            gas_limit: header.gas_limit,
-            gas_used: header.gas_used,
-            timestamp: header.timestamp,
-            extra_data: header.extra_data,
-            mix_hash: header.mix_hash,
-            nonce: header.nonce,
-            #[cfg(feature = "eip1559")]
-            base_fee_per_gas: header.base_fee_per_gas,
-            hash: header.hash,
-            partial_hash: header.partial_hash,
-        }
-    }
-}
-
-pub struct BlockHeaderPreLondon {
-    pub parent_hash: H256,
-    pub uncles_hash: H256,
-    pub author: Address,
-    pub state_root: H256,
-    pub transactions_root: H256,
-    pub receipts_root: H256,
-    pub log_bloom: Bloom,
-    pub difficulty: U256,
-    pub number: u64,
-    pub gas_limit: U256,
-    pub gas_used: U256,
-    pub timestamp: u64,
-    pub extra_data: Vec<u8>,
-    pub mix_hash: H256,
-    pub nonce: H64,
-
-    pub hash: Option<H256>,
-    pub partial_hash: Option<H256>,
-}
-
-impl From<BlockHeaderPreLondon> for BlockHeader {
-    fn from(header: BlockHeaderPreLondon) -> Self {
-        Self {
-            parent_hash: header.parent_hash,
-            uncles_hash: header.uncles_hash,
-            author: header.author,
-            state_root: header.state_root,
-            transactions_root: header.transactions_root,
-            receipts_root: header.receipts_root,
-            log_bloom: header.log_bloom,
-            difficulty: header.difficulty,
-            number: header.number,
-            gas_limit: header.gas_limit,
-            gas_used: header.gas_used,
-            timestamp: header.timestamp,
-            extra_data: header.extra_data,
-            mix_hash: header.mix_hash,
-            nonce: header.nonce,
-            #[cfg(feature = "eip1559")]
-            base_fee_per_gas: 7,
-            hash: header.hash,
-            partial_hash: header.partial_hash,
-        }
-    }
 }
 
 impl BlockHeader {
@@ -249,10 +163,16 @@ impl BlockHeader {
     }
 
     fn stream_rlp(&self, stream: &mut RlpStream, partial: bool) {
-        #[cfg(feature = "eip1559")]
-        let list_size = 14 + if !partial { 2 } else { 0 };
-        #[cfg(not(feature = "eip1559"))]
-        let list_size = 13 + if !partial { 2 } else { 0 };
+        let mut list_size = 13;
+        if !partial {
+            list_size += 2;
+        }
+        if self.base_fee_per_gas.is_some() {
+            list_size += 1;
+        }
+        if self.withdrawals_root.is_some() {
+            list_size += 1;
+        }
 
         stream.begin_list(list_size);
 
@@ -275,15 +195,20 @@ impl BlockHeader {
             stream.append(&self.nonce);
         }
 
-        #[cfg(feature = "eip1559")]
-        stream.append(&self.base_fee_per_gas);
+        if let Some(base_fee_per_gas) = &self.base_fee_per_gas {
+            stream.append(base_fee_per_gas);
+        }
+
+        if let Some(withdrawals_root) = &self.withdrawals_root {
+            stream.append(withdrawals_root);
+        }
     }
 
     pub fn calculate_hash(&self) -> H256 {
         near_keccak256({
             let mut stream = RlpStream::new();
             self.stream_rlp(&mut stream, false);
-            stream.out().as_slice()
+            &stream.out()[..]
         })
         .into()
     }
@@ -313,8 +238,8 @@ impl RlpDecodable for BlockHeader {
             extra_data: serialized.val_at(12)?,
             mix_hash: serialized.val_at(13)?,
             nonce: serialized.val_at(14)?,
-            #[cfg(feature = "eip1559")]
-            base_fee_per_gas: serialized.val_at(15)?,
+            base_fee_per_gas: serialized.val_at(15).ok(),
+            withdrawals_root: serialized.val_at(16).ok(),
             hash: None,
             partial_hash: None,
         };
@@ -323,7 +248,7 @@ impl RlpDecodable for BlockHeader {
             near_keccak256({
                 let mut stream = RlpStream::new();
                 block_header.stream_rlp(&mut stream, false);
-                stream.out().as_slice()
+                &stream.out()[..]
             })
             .into(),
         );
@@ -336,7 +261,7 @@ impl RlpDecodable for BlockHeader {
             near_keccak256({
                 let mut stream = RlpStream::new();
                 block_header.stream_rlp(&mut stream, true);
-                stream.out().as_slice()
+                &stream.out()[..]
             })
             .into(),
         );

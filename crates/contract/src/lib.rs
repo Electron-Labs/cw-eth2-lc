@@ -1,6 +1,7 @@
 pub mod contract;
 pub mod entrypoint;
 pub mod error;
+pub mod eth_utility;
 pub mod helpers;
 pub mod msg;
 pub mod state;

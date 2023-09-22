@@ -1,9 +1,7 @@
 //! Serialize a datatype as a JSON-blob within a single string.
-use serde::{
-    de::{DeserializeOwned, Error as _},
-    ser::Error as _,
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::de::{DeserializeOwned, Error as _};
+use serde::ser::Error as _;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Serialize as a JSON object within a string.
 pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>

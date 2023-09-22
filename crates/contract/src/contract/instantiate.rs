@@ -1,14 +1,10 @@
-use std::str::FromStr;
-
-use cosmwasm_std::DepsMut;
-use utility::{
-    consensus::Network,
-    types::{ExecutionHeaderInfo, InitInput},
-};
-
-use crate::{contract::admin_controlled::Mask, state::NonMappedState};
-
 use super::Contract;
+use crate::eth_utility::{compute_sync_committee_period, Network};
+use crate::msg::InitInput;
+use crate::state::NonMappedState;
+use cosmwasm_std::DepsMut;
+use electron_rs::verifier::near::{get_prepared_verifying_key, parse_verification_key};
+use std::str::FromStr;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-eth2-cl";
@@ -18,51 +14,43 @@ impl Contract<'_> {
     pub fn init(&mut self, deps: DepsMut, args: InitInput) {
         cw2::set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION).unwrap();
 
+        let vkey_lc_update =
+            get_prepared_verifying_key(parse_verification_key(args.vkey_lc_update_string).unwrap());
+        let vkey_sc_update =
+            get_prepared_verifying_key(parse_verification_key(args.vkey_sc_update_string).unwrap());
+
+        self.state
+            .mapped
+            .header_roots
+            .save(deps.storage, args.head_slot, &args.header_root)
+            .unwrap();
+
+        self.state
+            .mapped
+            .execution_state_roots
+            .save(deps.storage, args.head_slot, &args.execution_state_root)
+            .unwrap();
+
+        let period = compute_sync_committee_period(args.head_slot);
+        self.state
+            .mapped
+            .sync_committee_poseidon_hashes
+            .save(deps.storage, period, &args.sync_committee_poseidon_hash)
+            .unwrap();
+
         let network =
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
-
-        #[cfg(feature = "mainnet")]
-        {
-            assert!(
-                args.validate_updates,
-                "The updates validation can't be disabled for mainnet"
-            );
-
-            assert!(
-                args.verify_bls_signatures
-                    || args.trusted_signer.is_some(),
-                "The client can't be executed in the trustless mode without BLS sigs verification on Mainnet"
-            );
-        }
-
-        assert!(
-            args.finalized_execution_header.calculate_hash()
-                == args.finalized_beacon_header.execution_block_hash,
-            "Invalid execution block"
-        );
-
-        let finalized_execution_header_info = ExecutionHeaderInfo {
-            parent_hash: args.finalized_execution_header.parent_hash,
-            block_number: args.finalized_execution_header.number,
-            submitter: self.ctx.info.clone().unwrap().sender,
-        };
 
         self.state
             .non_mapped
             .save(
                 deps.storage,
                 &NonMappedState {
-                    admin: finalized_execution_header_info.submitter.clone(),
-                    paused: Mask::default(),
-                    trusted_signer: args.trusted_signer,
-                    validate_updates: args.validate_updates,
-                    verify_bls_signatures: args.verify_bls_signatures,
-                    hashes_gc_threshold: args.hashes_gc_threshold,
+                    admin: args.admin,
                     network,
-                    finalized_beacon_header: args.finalized_beacon_header,
-                    finalized_execution_header: Some(finalized_execution_header_info),
-                    current_sync_committee: Some(args.current_sync_committee),
-                    next_sync_committee: Some(args.next_sync_committee),
+                    head_slot: args.head_slot,
+                    vkey_lc_update,
+                    vkey_sc_update,
                 },
             )
             .unwrap();

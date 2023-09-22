@@ -4,7 +4,8 @@
 //!
 //! Quotes can be optional during decoding.
 
-use serde::{ser::SerializeSeq, Deserializer, Serializer};
+use serde::ser::SerializeSeq;
+use serde::{Deserializer, Serializer};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

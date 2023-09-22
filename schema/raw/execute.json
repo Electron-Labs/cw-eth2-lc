@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "update_light_client"
+      ],
+      "properties": {
+        "update_light_client": {
+          "type": "object",
+          "required": [
+            "light_client_update"
+          ],
+          "properties": {
+            "light_client_update": {
+              "$ref": "#/definitions/LightClientUpdate"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "LightClientUpdate": {
+      "type": "object",
+      "required": [
+        "attested_slot",
+        "execution_state_root",
+        "finalized_header_root",
+        "finalized_slot",
+        "lc_update_proof",
+        "participation"
+      ],
+      "properties": {
+        "attested_slot": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "execution_state_root": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        },
+        "finalized_header_root": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        },
+        "finalized_slot": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "lc_update_proof": {
+          "type": "string"
+        },
+        "next_sync_committee": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NextSyncCommittee"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "participation": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "NextSyncCommittee": {
+      "type": "object",
+      "required": [
+        "sc_update_proof",
+        "sync_committee_poseidon_hash",
+        "sync_committee_ssz"
+      ],
+      "properties": {
+        "sc_update_proof": {
+          "type": "string"
+        },
+        "sync_committee_poseidon_hash": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        },
+        "sync_committee_ssz": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

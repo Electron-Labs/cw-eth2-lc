@@ -1,6 +1,8 @@
+use super::*;
 use cosmwasm_schema::cw_serde;
-use schemars::{schema::Schema, JsonSchema};
-use tree_hash::{MerkleHasher, TreeHash};
+use schemars::schema::Schema;
+use schemars::JsonSchema;
+use tree_hash::MerkleHasher;
 
 use crate::{arr_wrapper_impl_tree_hash_and_borsh, vec_wrapper_impl_tree_hash, H256};
 

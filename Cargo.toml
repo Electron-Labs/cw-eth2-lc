@@ -6,3 +6,7 @@ members = [
 [patch]
 [patch.crates-io]
 eth2_hashing = { path = "crates/hashing" }
+eth2_ssz = { git = "https://github.com/aurora-is-near/lighthouse.git", tag = "v3.5.1-wasm"  }
+tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", tag = "v3.5.1-wasm"}
+tree_hash_derive = { git = "https://github.com/aurora-is-near/lighthouse.git", tag = "v3.5.1-wasm"}
+eth2_ssz_derive = { git = "https://github.com/aurora-is-near/lighthouse.git", tag = "v3.5.1-wasm" }

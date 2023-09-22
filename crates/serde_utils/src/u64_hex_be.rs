@@ -2,10 +2,8 @@
 //!
 //! E.g., `0` serializes as `"0x0000000000000000"`.
 
-use serde::{
-    de::{self, Error, Visitor},
-    Deserializer, Serializer,
-};
+use serde::de::{self, Error, Visitor};
+use serde::{Deserializer, Serializer};
 use std::fmt;
 
 const BYTES_LEN: usize = 8;

@@ -3,7 +3,8 @@
 //! E.g., `0` serializes as `"0x00"`.
 
 use crate::hex::PrefixedHexVisitor;
-use serde::{de::Error, Deserializer, Serializer};
+use serde::de::Error;
+use serde::{Deserializer, Serializer};
 
 pub fn serialize<S>(byte: &u8, serializer: S) -> Result<S::Ok, S::Error>
 where

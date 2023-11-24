@@ -42,35 +42,25 @@ impl Contract<'_> {
             Network::from_str(args.network.as_str()).unwrap_or_else(|e| panic!("{}", e.as_str()));
 
         self.state
-        .non_mapped
-        .save(
-            deps.storage,
-            &NonMappedState {
-                admin: args.admin,
-                network,
-                head_slot: args.head_slot,
-            },
-        )
-        .unwrap();
+            .non_mapped
+            .save(
+                deps.storage,
+                &NonMappedState {
+                    admin: args.admin,
+                    network,
+                    head_slot: args.head_slot,
+                },
+            )
+            .unwrap();
 
         self.state
             .non_mapped_lc
-            .save(
-                deps.storage,
-                &NonMappedStateLC {
-                    vkey_lc_update,
-                },
-            )
-        .unwrap();
+            .save(deps.storage, &NonMappedStateLC { vkey_lc_update })
+            .unwrap();
 
         self.state
             .non_mapped_sc
-            .save(
-                deps.storage,
-                &NonMappedStateSC {
-                    vkey_sc_update,
-                },
-            )
-        .unwrap();
+            .save(deps.storage, &NonMappedStateSC { vkey_sc_update })
+            .unwrap();
     }
 }

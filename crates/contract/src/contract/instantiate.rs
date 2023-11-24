@@ -1,7 +1,7 @@
 use super::Contract;
 use crate::eth_utility::{compute_sync_committee_period, Network};
 use crate::msg::InitInput;
-use crate::state::NonMappedState;
+use crate::state::{NonMappedState, NonMappedStateLC, NonMappedStateSC};
 use cosmwasm_std::DepsMut;
 use electron_rs::verifier::near::{get_prepared_verifying_key, parse_verification_key};
 use std::str::FromStr;
@@ -49,10 +49,18 @@ impl Contract<'_> {
                     admin: args.admin,
                     network,
                     head_slot: args.head_slot,
-                    vkey_lc_update,
-                    vkey_sc_update,
                 },
             )
+            .unwrap();
+
+        self.state
+            .non_mapped_lc
+            .save(deps.storage, &NonMappedStateLC { vkey_lc_update })
+            .unwrap();
+
+        self.state
+            .non_mapped_sc
+            .save(deps.storage, &NonMappedStateSC { vkey_sc_update })
             .unwrap();
     }
 }

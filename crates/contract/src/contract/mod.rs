@@ -104,8 +104,8 @@ impl Contract<'_> {
 
         let public_inputs = format!("{:?}", vec![hash_and_mask.to_string()]);
 
-        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-        let vkey_lc_update = non_mapped_state.vkey_lc_update;
+        let non_mapped_state_lc = self.state.non_mapped_lc.load(deps.storage).unwrap();
+        let vkey_lc_update = non_mapped_state_lc.vkey_lc_update;
 
         assert!(
             verify_proof(
@@ -134,8 +134,8 @@ impl Contract<'_> {
         }
         let public_inputs = format!("{:?}", public_inputs);
 
-        let non_mapped_state = self.state.non_mapped.load(deps.storage).unwrap();
-        let vkey_sc_update = non_mapped_state.vkey_sc_update;
+        let non_mapped_state_sc = self.state.non_mapped_sc.load(deps.storage).unwrap();
+        let vkey_sc_update = non_mapped_state_sc.vkey_sc_update;
 
         assert!(
             verify_proof(vkey_sc_update, sc_update_proof, public_inputs).unwrap(),
